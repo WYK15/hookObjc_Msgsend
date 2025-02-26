@@ -69,18 +69,18 @@ id _Nullable objc_msgSend(id _Nullable self, SEL _Nonnull op, ...)
 
 由于参数保存在x0-x8寄存器中，那么在`before_objc_msgSend`中对寄存器分析，就可以获取到入参。
 
-这里有个坑，self参数，在一些app中会引入引用计数问题导致崩溃，具体还没有具体查询。作为TODO吧，现在
-
 ```
 // 打印调用的OC方法的对象和方法名，和最多两个参数。
-void printSpecificParam_fish(id self, SEL _cmd, uintptr_t param1, uintptr_t param2,uintptr_t lr)
-{
-    // 此方法中暂只能使用C方法,使用OC方法可能会导致寄存器异常导致崩溃，经测试，发生在相同方法调用相同方法时崩溃
-    // NSlog可以用
-    const char * className = object_getClassName(self);
+void printSpecificParam_fish(id self, SEL _cmd, uintptr_t param1, uintptr_t param2,uintptr_t lr,uintptr_t sp)
+{    
+
+		const char * className = object_getClassName(self);
     const char * selector = sel_getName(_cmd);
-    //NSLog(@"class : %s, methodname : %s",className,selector);
-    if ( strcmp( selector, "fileExistsAtPath:" ) == 0) {
+    
+		if ( strcmp( selector, "isEqualToString:" ) == 0) {
+				// 打印self半身
+        NSLog(@"methodname : %s, self : %@, param1 : %@",selector,self, param1);
+    }else if ( strcmp( selector, "fileExistsAtPath:" ) == 0) {
         NSLog(@"class : %s, methodname : %s, param1 : %@",className,selector,param1);
     }else {
         NSLog(@"class : %s, methodname : %s",className,selector);
@@ -88,17 +88,6 @@ void printSpecificParam_fish(id self, SEL _cmd, uintptr_t param1, uintptr_t para
 }
 ```
 
-这里有个坑，self参数，在一些app中会引入引用计数问题导致崩溃，还没有具体查询。作为TODO吧，现在
-
-的printSpecificParam_fish参数入参需要修改一下，将self去除：
-
-```
-void printSpecificParam_fish( SEL _cmd, uintptr_t param1, uintptr_t param2,uintptr_t lr)
-{
-		const char * selector = sel_getName(_cmd);
-    NSLog(@"methodname : %s",selector);
-}
-```
 
 ## 运行结果
 
