@@ -1,7 +1,7 @@
 Package: com.ishumei.hookObjc-Msgsend
 Name: hookObjc_Msgsend
-Version: 0.1-1
-Description: 
+Version: 2.0
+Description: hookobjc
 Section: System
 Depends: firmware (>= 5.0), mobilesubstrate
 Conflicts: 
