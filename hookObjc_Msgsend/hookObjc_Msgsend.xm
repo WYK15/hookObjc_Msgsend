@@ -95,108 +95,41 @@ __asm volatile ("ldp x8, lr, [sp], #16\n");
 
 #define ret() __asm volatile ("ret\n");
 
-/* inline hook的before
- //inline hook不能使用直接或间接的调用OC方法
- // 注：如果是使用inline hook，那么此方法内调用的函数，不能是OC函数，即不能再经过objc_msgSend，原因如下：
- // inline hook修改了原始的函数，br跳转到了myhook。如果myhook中再次回调原始函数的起始处，会形成循环。
- // 在myHook中使用blr跳转到origin方法中，origin又br跳转到myHook中，如此便形成循环，所以打破循环，在myhook中不能调用经过原始函数
- // 修改方式 : 不直接调用oc方法，而是汇编设置好 x0 - x8寄存器，直接blr跳转到orig_objc_msgSend
- //fishhook的方式可以在此函数中调用OC方法，因为fishhook并没有修改原始的objc_msgSend函数
- 
-
- */
-// 此方法不能接收self,其中不能直接或者调用OC方法，NSlog也不可以
-void before_objc_msgSend_inline(SEL _cmd, uintptr_t lr)
-{
-    thread_call_stack *cs = (thread_call_stack *) pthread_getspecific(_thread_key);
-    if (cs == NULL) {
-        cs = (thread_call_stack *) malloc(sizeof(thread_call_stack));
-        cs->init();
-        pthread_setspecific(_thread_key, cs);
-    }
-    cs->push(lr);
-    // 此方法中暂只能使用C方法,使用OC方法可能会导致寄存器异常导致崩溃，经测试，发生在相同方法调用相同方法时崩溃
-    // NSlog不能用
-//    const char * className = object_getClassName(self);
-    const char * selector = sel_getName(_cmd);
-//    if ( strcmp( selector, "isEqualToString:" ) == 0) {
-//        //NSLog(@"class : %s, methodname : %s, param1 : %@",className,selector,param1);
-//        printf("class : %s, methodname : %s",className,selector);
-//    }
-//    else if ( strcmp( selector, "fileExistsAtPath:" ) == 0) {
-//        printf("class : %s, methodname : %s",className,selector);
-//        //NSLog(@"class : %s, methodname : %s, param1 : %@",className,selector,param1);
-//    }
-//    else if ( strcmp( selector, "setObject:forKey:" ) == 0) {
-//        printf("class : %s, methodname : %s",className,selector);
-//        //NSLog(@"class : %s, methodname : %s, object : %@, key : %@",className,selector,param1,param2);
-//    }else if ( strcmp( selector, "dataUsingEncoding:" ) == 0 ){
-//        printf("class : %s, methodname : %s",className,selector);
-//        //NSLog(@"class : %@, methodname : %s",self,selector);
-//    } else {
-//        printf("class : %s, methodname : %s",className,selector);
-//        //NSLog(@"class : %s, methodname : %s",className,selector);
-//    }
-    
-    //push_call_record(self, object_getClass(self), _cmd, lr);
-    //NSLog(@"before msgsend!!");
-    printf("before msgsend!!, selector : %s",selector);
-    //exit(0);
-    //return;
-}
-
-
-uintptr_t after_objc_msgSend_inline()
-{
-    thread_call_stack *cs = (thread_call_stack *) pthread_getspecific(_thread_key);
-    return cs->pop();
-}
-
 
 //self 参数，不必要时，需要去掉，否则可能会崩溃。
 //不会崩溃的修改方式为：
-void printSpecificParam_fish( SEL _cmd, uintptr_t param1, uintptr_t param2,uintptr_t lr)
-//void printSpecificParam_fish(id self, SEL _cmd, uintptr_t param1, uintptr_t param2,uintptr_t lr)
+void printSpecificParam_fish(id self, SEL _cmd, uintptr_t param1, uintptr_t param2,uintptr_t lr,uintptr_t sp)
 {
-    // 此方法中暂只能使用C方法,使用OC方法可能会导致寄存器异常导致崩溃，经测试，发生在相同方法调用相同方法时崩溃
-    // NSlog可以用
+
     //const char * className = object_getClassName(self);
     const char * selector = sel_getName(_cmd);
     //NSLog(@"class : %s, methodname : %s",className,selector);
     if ( strcmp( selector, "isEqualToString:" ) == 0) {
+        NSLog(@"methodname : %s, self : %@, param1 : %@",selector,self, param1);
+    } else if ( strcmp( selector, "fileExistsAtPath:" ) == 0) {
         NSLog(@"methodname : %s, param1 : %@",selector,param1);
-        //NSLog(@"class : %s, methodname : %s, param1 : %@",className,selector,param1);
-    }
-    else if ( strcmp( selector, "fileExistsAtPath:" ) == 0) {
-        NSLog(@"methodname : %s, param1 : %@",selector,param1);
-        //NSLog(@"class : %s, methodname : %s, param1 : %@",className,selector,param1);
-    }
-    else if ( strcmp( selector, "setObject:forKey:" ) == 0) {
-        NSLog(@"json : %@, methodname : %s, object : %@, key : %@",@"notAvailable",selector,param1,param2);
-        //NSLog(@"json : %@, methodname : %s, object : %@, key : %@",self,selector,param1,param2);
-    }else if ( strcmp( selector, "dataUsingEncoding:" ) == 0 ){
-        NSLog(@"class : %@, methodname : %s",@"notAvailable",selector);
-        //NSLog(@"class : %@, methodname : %s",self,selector);
-    }else if ( strcmp( selector, "objectForKey:" ) == 0 ){
-        NSLog(@"methodname : %s, key : %@",selector,param1);
-        //NSLog(@"json : %@, methodname : %s, key : %@",self,selector,param1);
+    } else if ( strcmp( selector, "setObject:forKey:" ) == 0) {
+        NSLog(@"json : %@, methodname : %s, object : %@, key : %@",self, selector,param1,param2);
+    } else if ( strcmp( selector, "dataUsingEncoding:" ) == 0 ){
+        NSLog(@"self : %@, methodname : %s",self,selector);
+    } else if ( strcmp( selector, "objectForKey:" ) == 0 ){
+        NSLog(@"self : %@, methodname : %s, key : %@",self, selector,param1);
     } else if ( strcmp( selector, "stringByAppendingString:" ) == 0 ){
-        NSLog(@"methodname : %s,str2 : %@",selector,param1);
-        //NSLog(@"str1 : %@, methodname : %s,str2 : %@",self,selector,param1);
+        NSLog(@"self : %@, methodname : %s,str2 : %@",self, selector,param1);
     } else if ( strcmp( selector, "dataWithJSONObject:options:error:" ) == 0 ){
         NSLog(@"methodname : %s,json : %@",selector,param1);
-       // NSLog(@"class : %s, methodname : %s,json : %@",className,selector,param1);
     } else if ( strcmp( selector, "stringWithUTF8String:" ) == 0 ){
         NSLog(@"methodname : %s,utf8str : %s",selector,param1);
-       // NSLog(@"class : %s, methodname : %s,utf8str : %s",className,selector,param1);
     } else if ( strcmp( selector, "appendFormat:" ) == 0 ){
-        NSLog(@"methodname : %s,format : %@",selector,param1);
-        //NSLog(@"class : %s, methodname : %s,format : %@",className,selector,param1);
+        NSLog(@"self : %@, methodname : %s,format : %@",self, selector,param1);
     } else if ( strcmp( selector, "dictionaryWithObjectsAndKeys:" ) == 0 ){
         //NSLog(@"class : %s, methodname : %s,object : %@, keys : %@",className,selector,param1,param2);
     } else if ( strcmp( selector, "hasPrefix:" ) == 0 ){
-        NSLog(@"methodname : %s,prefix : %@",selector,param1);
-        //NSLog(@"class : %s, methodname : %s,prefix : %@",className,selector,param1);
+        NSLog(@"self : %@, methodname : %s,prefix : %@",self, selector,param1);
+    } else if ( strcmp( selector, "UTF8String" ) == 0 ){
+        NSLog(@"self : %@, methodname : %s",self, selector);
+    } else if ( strcmp( selector, "containsString:" ) == 0) {
+        NSLog(@"self : %@, methodname : %s, subStr : %@",self, selector,param1);
     } else {
         NSLog(@"methodname : %s",selector);
         //NSLog(@"class : %s, methodname : %s",className,selector);
@@ -204,13 +137,11 @@ void printSpecificParam_fish( SEL _cmd, uintptr_t param1, uintptr_t param2,uintp
 }
 
 
- void before_objc_msgSend_fishhook( SEL _cmd, uintptr_t param1, uintptr_t param2,uintptr_t lr)
-//void before_objc_msgSend_fishhook(id self, SEL _cmd, uintptr_t param1, uintptr_t param2, uintptr_t lr)
+void before_objc_msgSend_fishhook(id self, SEL _cmd, uintptr_t param1, uintptr_t param2, uintptr_t lr, uintptr_t sp)
 {
-    //if (self) {
-        printSpecificParam_fish(_cmd, param1, param2,lr);
-        //printSpecificParam_fish(self, _cmd, param1, param2,lr);
-    //}
+
+    printSpecificParam_fish(self, _cmd, param1, param2,lr,sp);
+
     
     thread_call_stack *cs = (thread_call_stack *) pthread_getspecific(_thread_key);
     if (cs == NULL) {
@@ -219,15 +150,14 @@ void printSpecificParam_fish( SEL _cmd, uintptr_t param1, uintptr_t param2,uintp
         pthread_setspecific(_thread_key, cs);
     }
     cs->push(lr);
-    
-    NSLog(@"before msgsend!!");
+
 }
 
 
 uintptr_t after_objc_msgSend_fishhook()
 {
-    NSLog(@"after msgsend!!");
     thread_call_stack *cs = (thread_call_stack *) pthread_getspecific(_thread_key);
+    //NSLog(@"after msgsend!!");
     return cs->pop();
 }
 
@@ -238,42 +168,6 @@ static void release_stack(void *ptr) {
     free(cs);
 }
 
-// inline hook的myhook
-// TODO，现在只实现了在objc_msgSend方法前hook
-__attribute__((__naked__))
-static void hook_Objc_msgSend_inline() {
-
-    // before之前保存objc_msgSend的参数
-    save()
-    
-    //设置before_objc_msgSend_inline的入参，不能传入x0。因为x0会增加引用计数，导致调用OC的objc_retain，造成循环
-    __asm volatile ("mov x0, x1\n");
-    __asm volatile ("mov x1, lr\n");
-
-    call(blr, &before_objc_msgSend_inline)
-    
-    // 恢复objc_msgSend参数，并执行
-    load()
-    
-    // Call through to the original objc_msgSend.
-    // blr会把当前PC+4回写到X30
-    call(blr, orig_objc_msgSend)
-
-    // 保存objc_msgSend的执行结果
-    save()
-    
-    // after_objc_msgSend的返回参数即为本线程的最顶层的lr出栈
-    call(blr, &after_objc_msgSend_inline)
-    
-    // restore lr
-    __asm volatile ("mov lr, x0\n");
-    
-    //加载orig_objc_msgSend结果
-    load()
-
-    ret()
-}
-
 
 //ok - fishhook
 __attribute__((__naked__))
@@ -281,10 +175,11 @@ static void hook_Objc_msgSend_fishhook() {
     // before之前保存objc_msgSend的参数
     save()
     
-    __asm volatile ("mov x0, x1\n");
-    __asm volatile ("mov x1, x2\n");
-    __asm volatile ("mov x2, x3\n");
-    __asm volatile ("mov x3, lr\n");
+//    __asm volatile ("mov x0, x1\n");
+//    __asm volatile ("mov x1, x2\n");
+//    __asm volatile ("mov x2, x3\n");
+    __asm volatile ("mov x4, lr\n");
+    __asm volatile ("mov x5, sp\n");
 
     call(blr, &before_objc_msgSend_fishhook)
     
@@ -307,22 +202,12 @@ static void hook_Objc_msgSend_fishhook() {
     //加载orig_objc_msgSend结果
     load()
 
+    //ret:  MOV PC, LR
     ret()
 }
 
 %ctor
 {
-    // 1. 使用 作者的 代码，fishhook，成功
-    //smCallTraceStart();
-    
-    // 2. 自己研究，inline hook，会修改objc_msgSend原始方法的前3条指令
-    // 函数中不能调用OC函数
-//    pthread_key_create(&_thread_key, &release_stack);
-//    MSHookFunction((void*)&objc_msgSend,(void*)&hook_Objc_msgSend_inline,(void**)&orig_objc_msgSend);
-
-    // 3. 自己研究
-    // 借鉴作者代码，使用线程私有变量pthread_key_t，保证多线程安全，成功
-    // hook中只能使用C函数
     // fishhook
     pthread_key_create(&_thread_key, &release_stack);
     rebind_symbols((struct rebinding[1]){

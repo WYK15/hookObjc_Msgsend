@@ -6,9 +6,7 @@
 	<dict>
 		<key>Bundles</key>
 		<array>
-			<string>com.yaymedialabs.putong</string>
 			<string>com.wedobest.pintuyx</string>
-			<string>com.ishumei.demo</string>
 		</array>
 	</dict>
 </dict>
