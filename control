@@ -1,6 +1,6 @@
 Package: com.oel.hookobjcmsgsend
 Name: hookobjcmsgsend
-Version: 0.0.1
+Version: 2.0.0
 Architecture: iphoneos-arm
 Description: hook objc_msgsend
 Maintainer: wangyankun
