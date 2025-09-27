@@ -1,0 +1,7 @@
+Package: com.rainl.nake
+Name: nake
+Version: 1.0.0
+Architecture: iphoneos-arm
+Description: reveal 
+Maintainer: rainl
+Author: rainl

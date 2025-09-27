@@ -1,0 +1,9 @@
+Package: com.rainl.nakeTweak
+Name: nakeTweak
+Version: 2.0.0
+Architecture: iphoneos-arm
+Description: hook objc_msgSend and kinds of methods
+Maintainer: rainl
+Author: rainl
+Section: Tweaks
+Depends: mobilesubstrate (>= 0.9.5000)

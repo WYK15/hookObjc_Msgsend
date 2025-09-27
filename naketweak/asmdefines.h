@@ -11,6 +11,15 @@ __asm volatile (#b " x12\n");
 
 #define save() \
 __asm volatile ( \
+"stp x26, x27, [sp, #-16]!\n" \
+"stp x24, x25, [sp, #-16]!\n" \
+"stp x22, x23, [sp, #-16]!\n" \
+"stp x20, x21, [sp, #-16]!\n" \
+"stp x18, x19, [sp, #-16]!\n" \
+"stp x16, x17, [sp, #-16]!\n" \
+"stp x14, x15, [sp, #-16]!\n" \
+"stp x12, x13, [sp, #-16]!\n" \
+"stp x10, x11, [sp, #-16]!\n" \
 "stp x8, x9, [sp, #-16]!\n" \
 "stp x6, x7, [sp, #-16]!\n" \
 "stp x4, x5, [sp, #-16]!\n" \
@@ -33,7 +42,24 @@ __asm volatile ( \
 "ldp x2, x3, [sp], #16\n" \
 "ldp x4, x5, [sp], #16\n" \
 "ldp x6, x7, [sp], #16\n" \
-"ldp x8, x9, [sp], #16\n" );
+"ldp x8, x9, [sp], #16\n" \
+"ldp x10, x11, [sp], #16\n" \
+"ldp x12, x13, [sp], #16\n" \
+"ldp x14, x15, [sp], #16\n" \
+"ldp x16, x17, [sp], #16\n" \
+"ldp x18, x19, [sp], #16\n" \
+"ldp x20, x21, [sp], #16\n" \
+"ldp x22, x23, [sp], #16\n" \
+"ldp x24, x25, [sp], #16\n" \
+"ldp x26, x27, [sp], #16\n" );
+
+#define saveLR() \
+__asm volatile ( \
+"stp x30, xzr, [sp, #-16]!\n" );  // 使用xzr填充，保持16字节对齐
+
+#define loadLR() \
+__asm volatile ( \
+"ldp x30, xzr, [sp], #16\n" );    // 配对恢复，保持栈平衡
 
 #define link(b, value) \
 __asm volatile ("stp x8, lr, [sp, #-16]!\n"); \

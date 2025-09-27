@@ -123,3 +123,4 @@ tags
 
 #build
 packages/*
+*.deb

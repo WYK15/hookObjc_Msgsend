@@ -1,28 +1,22 @@
-TARGET := iphone:clang:latest:14.0
-INSTALL_TARGET_PROCESSES = SpringBoard
-
-# THEOS_DEVICE_IP = 172.16.23.36
-# THEOS_DEVICE_PORT = 22
-
-#  `make clean package ROOTLESS=1` to compile rootless
-ifeq ($(ROOTLESS),1)
-THEOS_PACKAGE_SCHEME=rootless
-endif
-
-ifeq ($(THEOS_PACKAGE_SCHEME),rootless)
-	ARCHS = arm64 arm64e
-	TARGET = iphone:clang:latest:15.0
-else
-#	ARCHS = armv7 armv7s arm64 arm64e
-	ARCHS = arm64
-	TARGET = iphone:clang:latest:7.0
-endif
+TARGET := iphone:16.5:14.0
+#export ARCHS = arm64
 
 include $(THEOS)/makefiles/common.mk
 
-TWEAK_NAME = hookObjcMsgsend
+SUBPROJECTS += naketweak
+SUBPROJECTS += nakepref
 
-hookObjcMsgsend_FILES = Tweak.xm fishhook/fishhook.c
-hookObjcMsgsend_CFLAGS = -fobjc-arc
+include $(THEOS_MAKE_PATH)/aggregate.mk
 
-include $(THEOS_MAKE_PATH)/tweak.mk
+all::
+
+before-package::
+	find $(THEOS_STAGING_DIR) -name ".DS_Store" -delete
+
+stage::
+	find . -name ".DS_Store" -delete
+
+
+# compile:
+# make clean && make package FINALPACKAGE=1
+# make clean && make package THEOS_PACKAGE_SCHEME=rootless  FINALPACKAGE=1
