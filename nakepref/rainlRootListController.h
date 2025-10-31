@@ -3,4 +3,6 @@
 
 @interface rainlRootListController : PSListController
 
+- (void)showAppList;
+
 @end

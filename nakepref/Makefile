@@ -6,7 +6,7 @@ BUNDLE_NAME = nakePref
 
 nakePref_FILES = rainlRootListController.m
 nakePref_FRAMEWORKS = UIKit
-nakePref_PRIVATE_FRAMEWORKS = Preferences
+nakePref_PRIVATE_FRAMEWORKS = Preferences MobileCoreServices
 nakePref_INSTALL_PATH = /Library/PreferenceBundles
 nakePref_CFLAGS = -fobjc-arc
 

@@ -46,6 +46,22 @@
 			<key>label</key>
 			<string>启用 dlopen Hook</string>
 		</dict>
+
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>应用列表</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>action</key>
+			<string>showAppList</string>
+			<key>label</key>
+			<string>查看已安装应用</string>
+		</dict>
+		
 	</array>
 	<key>title</key>
 	<string>nakePref</string>
