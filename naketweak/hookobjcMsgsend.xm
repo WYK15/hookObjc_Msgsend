@@ -53,35 +53,6 @@ static int strlen_SOLO(const char *str) {
     return len;
 }
 
-static const char* blackMethod[] = {"dealloc", "_xref_dispose"};
-static BOOL isBlackMethod(SEL _cmd) {
-    // return YES;
-    if (_cmd == NULL) {
-        return NO;
-    }
-    char *cmdAddr = (char*)_cmd;
-    for (int i = 0; i < sizeof(blackMethod) / sizeof(blackMethod[0]); i++) {
-        int len1 = strlen_SOLO((const char*)cmdAddr);
-        const char* blackMethodName = blackMethod[i];
-        int len2 = strlen_SOLO(blackMethodName);
-        if (len1 != len2) {
-            continue;
-        }
-        BOOL found = YES;
-        for(int j = 0; j < len1; j++) {
-            if (cmdAddr[j] != blackMethodName[j]) {
-                found = NO;
-                break;
-            }
-        }
-        if (found) {
-            //NSLog(@"blackMethod detected : %s",blackMethodName);
-            return YES;
-        }
-    }
-    return NO;
-}
-
 
 //ok - fishhook
 __attribute__((__naked__))
@@ -90,20 +61,9 @@ static void hook_Objc_msgSend_fishhook() {
     saveLR()
     save()
 
-    // 判断是否为黑名单方法
-    __asm volatile ("mov x0, x1\n");
-    call(blr, &isBlackMethod)
-
-    //judge x0 is true, if true, call(blr, &before_objc_msgSend_fishhook)
-    __asm volatile ("cbnz x0, 1f\n");
-
-    load()
-
-    save()
-
     call(blr, &printSpecificParam_fish)
    
-    __asm volatile ("1:\n");
+    //__asm volatile ("1:\n");
     // 恢复objc_msgSend参数，并执行
     load()
     
