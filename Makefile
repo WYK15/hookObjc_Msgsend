@@ -4,8 +4,7 @@ TARGET := iphone:16.5:14.0
 include $(THEOS)/makefiles/common.mk
 
 SUBPROJECTS += naketweak
-SUBPROJECTS += nakepref
-
+SUBPROJECTS += nakeapp
 include $(THEOS_MAKE_PATH)/aggregate.mk
 
 all::

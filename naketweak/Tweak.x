@@ -6,7 +6,6 @@
 
 // 定义偏好设置的键
 static NSString *const kPreferencePath = @"/var/mobile/Library/Preferences/com.rainl.nakePref.plist";
-static NSString *const kPreferenceAppPath = @"/var/mobile/Library/Preferences/com.rainl.nake.apps.plist";
 static NSString *const kEnableObjcMsgSendHook = @"EnableObjcMsgSendHook";
 static NSString *const kEnableAccessHook = @"EnableAccessHook";
 static NSString *const kEnableDlopenHook = @"EnableDlopenHook";
@@ -16,10 +15,16 @@ static BOOL enableObjcMsgSendHook = YES;
 static BOOL enableAccessHook = YES;
 static BOOL enableDlopenHook = YES;
 
-// 加载偏好设置
-static void loadPreferences() {
-    NSString *nakedPref = ROOT_PATH_NS(kPreferencePath);
-    NSDictionary *prefs = [[NSDictionary alloc] initWithContentsOfFile:nakedPref];
+// 从plist文件加载配置（统一使用一个文件）
+static NSDictionary* loadPreferences() {
+    NSString *prefsPath = ROOT_PATH_NS(kPreferencePath);
+    NSDictionary *prefs = [[NSDictionary alloc] initWithContentsOfFile:prefsPath];
+    return prefs ?: @{};
+}
+
+// 加载Hook设置
+static void loadHookSettings() {
+    NSDictionary *prefs = loadPreferences();
     
     if (prefs) {
         enableObjcMsgSendHook = [prefs[kEnableObjcMsgSendHook] boolValue];
@@ -28,16 +33,9 @@ static void loadPreferences() {
     }
 }
 
-// 从plist文件加载配置
-static NSDictionary* loadAppPreferences() {
-    NSString *prefsPath = ROOT_PATH_NS(kPreferenceAppPath);
-    NSDictionary *prefs = [[NSDictionary alloc] initWithContentsOfFile:prefsPath];
-    return prefs ?: @{};
-}
-
 // 检查全局监控是否启用
 static BOOL isGlobalMonitoringEnabled() {
-    NSDictionary *prefs = loadAppPreferences();
+    NSDictionary *prefs = loadPreferences();
     NSNumber *globalSwitch = prefs[@"global_monitoring"];
     return globalSwitch ? [globalSwitch boolValue] : YES;  // 默认开启
 }
@@ -53,7 +51,7 @@ static BOOL isAppEnabled(NSString *bundleId) {
             return NO;
         }
         
-        NSDictionary *prefs = loadAppPreferences();
+        NSDictionary *prefs = loadPreferences();
         // NSLog(@"[nake] prefs : %@",prefs);
 
         NSString *key = [NSString stringWithFormat:@"app_switch_%@", bundleId];
@@ -74,7 +72,7 @@ static BOOL isAppEnabled(NSString *bundleId) {
 // 设置变更通知回调
 static void prefsChanged(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo) {
     NSLog(@"[nake] Preferences changed, reloading settings...");
-    loadPreferences();
+    loadHookSettings();
     NSString *bundleId = [[NSBundle mainBundle] bundleIdentifier];
     NSLog(@"[nake] Reloaded preferences for %@ - ObjcMsgSend: %d, Access: %d, Dlopen: %d", 
           bundleId, enableObjcMsgSendHook, enableAccessHook, enableDlopenHook);
@@ -90,7 +88,7 @@ static void prefsChanged(CFNotificationCenterRef center, void *observer, CFStrin
     }
 
     // 加载初始设置
-    loadPreferences();
+    loadHookSettings();
 
     NSLog(@"[nake] Hook preferences - ObjcMsgSend: %d, Access: %d, Dlopen: %d", 
           enableObjcMsgSendHook, enableAccessHook, enableDlopenHook);
@@ -107,9 +105,9 @@ static void prefsChanged(CFNotificationCenterRef center, void *observer, CFStrin
     }
     
     if (enableDlopenHook) {
-        NSLog(@"[nake] dlopen hook not implemented yet");
-        // 需要实现dlopen的hook函数
-        // hook_dlopen();
+        NSLog(@"[nake] Enabling dlopen and dlsym hooks");
+        hook_dlopen();
+        hook_dlsym();
     }
     
     NSLog(@"[nake] Tweak initialization completed for %@", bundleId);
