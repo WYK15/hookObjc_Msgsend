@@ -14,6 +14,19 @@ static NSString *const kEnableDlopenHook = @"EnableDlopenHook";
 static BOOL enableObjcMsgSendHook = YES;
 static BOOL enableAccessHook = YES;
 static BOOL enableDlopenHook = YES;
+static BOOL enableRes9InitHook = YES;
+static BOOL enableClassGetClassMethodHook = NO;
+static BOOL enableSelRegisterNameHook = NO;
+static BOOL enableCFNetworkCopySystemProxySettingsHook = NO;
+
+// 新增的 Hook 开关（按类别分组）
+static BOOL enableSystemFunctionsHook = NO;  // 文件和系统函数
+static BOOL enableCryptoFunctionsHook = NO;  // 加密函数
+static BOOL enableHostInfoFunctionsHook = NO;  // 主机信息函数
+static BOOL enableCFStringFunctionsHook = NO;  // CoreFoundation 字符串函数
+static BOOL enableCFURLFunctionsHook = NO;  // CoreFoundation URL 函数
+static BOOL enableTimeFunctionsHook = NO;  // 时间函数
+static BOOL enableKeychainFunctionsHook = NO;  // Keychain 函数
 
 // 从plist文件加载配置（统一使用一个文件）
 static NSDictionary* loadPreferences() {
@@ -30,6 +43,19 @@ static void loadHookSettings() {
         enableObjcMsgSendHook = [prefs[kEnableObjcMsgSendHook] boolValue];
         enableAccessHook = [prefs[kEnableAccessHook] boolValue];
         enableDlopenHook = [prefs[kEnableDlopenHook] boolValue];
+        enableRes9InitHook = [prefs[@"enableRes9Init"] boolValue];
+        enableClassGetClassMethodHook = [prefs[@"enableClassGetClassMethod"] boolValue];
+        enableSelRegisterNameHook = [prefs[@"enableSelRegisterName"] boolValue];
+        enableCFNetworkCopySystemProxySettingsHook = [prefs[@"enableCFNetworkCopySystemProxySettings"] boolValue];
+        
+        // 新增的 Hook 开关配置读取
+        enableSystemFunctionsHook = [prefs[@"enableSystemFunctions"] boolValue];
+        enableCryptoFunctionsHook = [prefs[@"enableCryptoFunctions"] boolValue];
+        enableHostInfoFunctionsHook = [prefs[@"enableHostInfoFunctions"] boolValue];
+        enableCFStringFunctionsHook = [prefs[@"enableCFStringFunctions"] boolValue];
+        enableCFURLFunctionsHook = [prefs[@"enableCFURLFunctions"] boolValue];
+        enableTimeFunctionsHook = [prefs[@"enableTimeFunctions"] boolValue];
+        enableKeychainFunctionsHook = [prefs[@"enableKeychainFunctions"] boolValue];
     }
 }
 
@@ -108,6 +134,80 @@ static void prefsChanged(CFNotificationCenterRef center, void *observer, CFStrin
         NSLog(@"[nake] Enabling dlopen and dlsym hooks");
         hook_dlopen();
         hook_dlsym();
+    }
+    
+    if (enableRes9InitHook) {
+        NSLog(@"[nake] Enabling res9 init hook");
+        hook_res_9_init();
+    }
+    
+    if (enableClassGetClassMethodHook) {
+        NSLog(@"[nake] Enabling class_getClassMethod hook");
+        hook_class_getClassMethod();
+    }
+    
+    if (enableSelRegisterNameHook) {
+        NSLog(@"[nake] Enabling sel_registerName hook");
+        hook_sel_registerName();
+    }
+    
+    if (enableCFNetworkCopySystemProxySettingsHook) {
+        NSLog(@"[nake] Enabling CFNetworkCopySystemProxySettings hook");
+        hook_CFNetworkCopySystemProxySettings();
+    }
+    
+    // 新增的 Hook 初始化
+    if (enableSystemFunctionsHook) {
+        NSLog(@"[nake] Enabling system functions hook");
+        hook_fopen();
+        hook_getenv();
+        hook_getifaddrs();
+        hook_stat();
+        hook_sysctl();
+        hook_sysctlbyname();
+        hook_uname();
+        hook_isatty();
+        hook_open();
+        hook_opendir();
+        hook_read();
+    }
+    
+    if (enableCryptoFunctionsHook) {
+        NSLog(@"[nake] Enabling crypto functions hook");
+        hook_CC_SHA256();
+    }
+    
+    if (enableHostInfoFunctionsHook) {
+        NSLog(@"[nake] Enabling host info functions hook");
+        hook_host_info();
+        hook_host_statistics64();
+    }
+    
+    if (enableCFStringFunctionsHook) {
+        NSLog(@"[nake] Enabling CFString functions hook");
+        hook_CFStringCreateCopy();
+        hook_CFStringCreateWithCString();
+        hook_CFStringCreateWithFileSystemRepresentation();
+        hook_CFStringCreateWithFormat();
+    }
+    
+    if (enableCFURLFunctionsHook) {
+        NSLog(@"[nake] Enabling CFURL functions hook");
+        hook_CFURLCreateWithFileSystemPath();
+        hook_CFURLCreateWithString();
+    }
+    
+    if (enableTimeFunctionsHook) {
+        NSLog(@"[nake] Enabling time functions hook");
+        hook_CACurrentMediaTime();
+    }
+    
+    if (enableKeychainFunctionsHook) {
+        NSLog(@"[nake] Enabling keychain functions hook");
+        hook_SecItemAdd();
+        hook_SecItemUpdate();
+        hook_SecItemDelete();
+        hook_SecItemCopyMatching();
     }
     
     NSLog(@"[nake] Tweak initialization completed for %@", bundleId);

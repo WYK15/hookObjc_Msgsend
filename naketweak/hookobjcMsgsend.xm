@@ -12,35 +12,37 @@ void printSpecificParam_fish(id self, SEL _cmd, void* param1, void* param2)
     const char * selector = sel_getName(_cmd);
     //NSLog(@"class : %s, methodname : %s",className,selector);
     if ( strcmp( selector, "isEqualToString:" ) == 0) {
-        NSLog(@"[ENABLED] methodname : %s, self : %@, param1 : %@",selector,self, param1);
+        NSLog(@"[HOOK] methodname : %s, self : %@, param1 : %@",selector,self, param1);
     } else if ( strcmp( selector, "fileExistsAtPath:" ) == 0) {
-        NSLog(@"[ENABLED] methodname : %s, param1 : %@",selector,param1);
+        NSLog(@"[HOOK] methodname : %s, param1 : %@",selector,param1);
     } else if ( strcmp( selector, "setObject:forKey:" ) == 0) {
-        NSLog(@"[ENABLED] json : %@, methodname : %s, object : %@, key : %@",self, selector,param1,param2);
+        NSLog(@"[HOOK] json : %@, methodname : %s, object : %@, key : %@",self, selector,param1,param2);
     } else if ( strcmp( selector, "dataUsingEncoding:" ) == 0 ){
-        NSLog(@"[ENABLED] self : %@, methodname : %s",self,selector);
+        NSLog(@"[HOOK] self : %@, methodname : %s",self,selector);
     } else if ( strcmp( selector, "objectForKey:" ) == 0 ){
-        NSLog(@"[ENABLED] self : %@, methodname : %s, key : %@",self, selector,param1);
+        NSLog(@"[HOOK] self : %@, methodname : %s, key : %@",self, selector,param1);
     } else if ( strcmp( selector, "stringByAppendingString:" ) == 0 ){
-        NSLog(@"[ENABLED] self : %@, methodname : %s,str2 : %@",self, selector,param1);
+        NSLog(@"[HOOK] self : %@, methodname : %s,str2 : %@",self, selector,param1);
     } else if ( strcmp( selector, "dataWithJSONObject:options:error:" ) == 0 ){
-        NSLog(@"[ENABLED] methodname : %s,json : %@",selector,param1);
+        NSLog(@"[HOOK] methodname : %s,json : %@",selector,param1);
     } else if ( strcmp( selector, "stringWithUTF8String:" ) == 0 ){
-        NSLog(@"[ENABLED] methodname : %s,utf8str : %s",selector,(char*)param1);
+        NSLog(@"[HOOK] methodname : %s,utf8str : %s",selector,(char*)param1);
     } else if ( strcmp( selector, "appendFormat:" ) == 0 ){
-        NSLog(@"[ENABLED] self : %@, methodname : %s,format : %@",self, selector,param1);
+        NSLog(@"[HOOK] self : %@, methodname : %s,format : %@",self, selector,param1);
     } else if ( strcmp( selector, "dictionaryWithObjectsAndKeys:" ) == 0 ){
         //NSLog(@"class : %s, methodname : %s,object : %@, keys : %@",className,selector,param1,param2);
     } else if ( strcmp( selector, "hasPrefix:" ) == 0 ){
-        NSLog(@"[ENABLED] self : %@, methodname : %s,prefix : %@",self, selector,param1);
+        NSLog(@"[HOOK] self : %@, methodname : %s,prefix : %@",self, selector,param1);
     } else if ( strcmp( selector, "UTF8String" ) == 0 ){
-        NSLog(@"[ENABLED] self : %@, methodname : %s",self, selector);
+        NSLog(@"[HOOK] self : %@, methodname : %s",self, selector);
     } else if ( strcmp( selector, "containsString:" ) == 0) {
-        NSLog(@"[ENABLED] self : %@, methodname : %s, subStr : %@",self, selector,param1);
+        NSLog(@"[HOOK] self : %@, methodname : %s, subStr : %@",self, selector,param1);
     } else if ( strcmp( selector, "setText:" ) == 0) {
-        NSLog(@"[ENABLED] self : %@, methodname : %s, text : %@",self, selector,param1);
+        NSLog(@"[HOOK] self : %@, methodname : %s, text : %@",self, selector,param1);
+    } else if ( strcmp( selector, "objectForKeyedSubscript:" ) == 0 ){
+        NSLog(@"[HOOK] self : %@, methodname : %s, key : %@",self, selector,param1);
     } else {
-        NSLog(@"[ENABLED] methodname : %s",selector);
+        NSLog(@"[HOOK] methodname : %s",selector);
         //NSLog(@"class : %s, methodname : %s",className,selector);
     }
 }

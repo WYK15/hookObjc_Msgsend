@@ -17,8 +17,37 @@ static NSString *const kEnableObjcMsgSendHook = @"EnableObjcMsgSendHook";
 static NSString *const kEnableAccessHook = @"EnableAccessHook";
 static NSString *const kEnableDlopenHook =
     @"EnableDlopenHook"; // 包含 dlopen 和 dlsym
+static NSString *const kEnableRes9InitHook = @"EnableRes9InitHook";
+static NSString *const kEnableClassGetClassMethodHook = @"enableClassGetClassMethod";
+static NSString *const kEnableSelRegisterNameHook = @"enableSelRegisterName";
+static NSString *const kEnableCFNetworkCopySystemProxySettingsHook = @"enableCFNetworkCopySystemProxySettings";
+
+// 新增的 Hook 控制键（按类别分组）
+static NSString *const kEnableSystemFunctionsHook = @"enableSystemFunctions";
+static NSString *const kEnableCryptoFunctionsHook = @"enableCryptoFunctions";
+static NSString *const kEnableHostInfoFunctionsHook = @"enableHostInfoFunctions";
+static NSString *const kEnableCFStringFunctionsHook = @"enableCFStringFunctions";
+static NSString *const kEnableCFURLFunctionsHook = @"enableCFURLFunctions";
+static NSString *const kEnableTimeFunctionsHook = @"enableTimeFunctions";
+static NSString *const kEnableKeychainFunctionsHook = @"enableKeychainFunctions";
 
 @interface NKARootViewController ()
+@property (nonatomic, strong) UISwitch *objcMsgSendSwitch;
+@property (nonatomic, strong) UISwitch *accessSwitch;
+@property (nonatomic, strong) UISwitch *dlopenSwitch;
+@property (nonatomic, strong) UISwitch *res9InitSwitch;
+@property (nonatomic, strong) UISwitch *classGetClassMethodSwitch;
+@property (nonatomic, strong) UISwitch *selRegisterNameSwitch;
+@property (nonatomic, strong) UISwitch *cfNetworkCopySystemProxySettingsSwitch;
+
+// 新增的 Hook 开关属性
+@property (nonatomic, strong) UISwitch *systemFunctionsSwitch;
+@property (nonatomic, strong) UISwitch *cryptoFunctionsSwitch;
+@property (nonatomic, strong) UISwitch *hostInfoFunctionsSwitch;
+@property (nonatomic, strong) UISwitch *cfStringFunctionsSwitch;
+@property (nonatomic, strong) UISwitch *cfURLFunctionsSwitch;
+@property (nonatomic, strong) UISwitch *timeFunctionsSwitch;
+@property (nonatomic, strong) UISwitch *keychainFunctionsSwitch;
 @end
 
 @implementation NKARootViewController
@@ -52,7 +81,7 @@ static NSString *const kEnableDlopenHook =
 - (NSInteger)tableView:(UITableView *)tableView
     numberOfRowsInSection:(NSInteger)section {
   if (section == 0) {
-    return 3; // 三个 Hook 开关
+    return 14; // 7个原有 Hook 开关 + 7个新增 Hook 开关
   } else {
     return 2; // 全局开关 + 查看应用列表按钮
   }
@@ -108,6 +137,61 @@ static NSString *const kEnableDlopenHook =
       key = kEnableDlopenHook;
       tag = 102;
       break;
+    case 3:
+      title = @"启用 _res_9_init Hook";
+      key = kEnableRes9InitHook;
+      tag = 103;
+      break;
+    case 4:
+      title = @"启用 class_getClassMethod Hook";
+      key = kEnableClassGetClassMethodHook;
+      tag = 104;
+      break;
+    case 5:
+      title = @"启用 sel_registerName Hook";
+      key = kEnableSelRegisterNameHook;
+      tag = 105;
+      break;
+    case 6:
+      title = @"启用 CFNetworkCopySystemProxySettings Hook";
+      key = kEnableCFNetworkCopySystemProxySettingsHook;
+      tag = 106;
+      break;
+    case 7:
+      title = @"启用系统函数 Hook (fopen, getenv, etc.)";
+      key = kEnableSystemFunctionsHook;
+      tag = 107;
+      break;
+    case 8:
+      title = @"启用加密函数 Hook (CC_SHA256)";
+      key = kEnableCryptoFunctionsHook;
+      tag = 108;
+      break;
+    case 9:
+      title = @"启用主机信息 Hook (host_info, etc.)";
+      key = kEnableHostInfoFunctionsHook;
+      tag = 109;
+      break;
+    case 10:
+      title = @"启用 CFString Hook";
+      key = kEnableCFStringFunctionsHook;
+      tag = 110;
+      break;
+    case 11:
+      title = @"启用 CFURL Hook";
+      key = kEnableCFURLFunctionsHook;
+      tag = 111;
+      break;
+    case 12:
+      title = @"启用时间函数 Hook (CACurrentMediaTime)";
+      key = kEnableTimeFunctionsHook;
+      tag = 112;
+      break;
+    case 13:
+      title = @"启用 Keychain Hook";
+      key = kEnableKeychainFunctionsHook;
+      tag = 113;
+      break;
     default:
       title = @"";
       key = @"";
@@ -128,6 +212,52 @@ static NSString *const kEnableDlopenHook =
                       action:@selector(hookSwitchChanged:)
             forControlEvents:UIControlEventValueChanged];
     cell.accessoryView = switchControl;
+    
+    // 保存switch引用
+    switch (tag) {
+      case 100:
+        self.objcMsgSendSwitch = switchControl;
+        break;
+      case 101:
+        self.accessSwitch = switchControl;
+        break;
+      case 102:
+        self.dlopenSwitch = switchControl;
+        break;
+      case 103:
+        self.res9InitSwitch = switchControl;
+        break;
+      case 104:
+      self.classGetClassMethodSwitch = switchControl;
+      break;
+    case 105:
+      self.selRegisterNameSwitch = switchControl;
+      break;
+    case 106:
+      self.cfNetworkCopySystemProxySettingsSwitch = switchControl;
+      break;
+    case 107:
+      self.systemFunctionsSwitch = switchControl;
+      break;
+    case 108:
+      self.cryptoFunctionsSwitch = switchControl;
+      break;
+    case 109:
+      self.hostInfoFunctionsSwitch = switchControl;
+      break;
+    case 110:
+      self.cfStringFunctionsSwitch = switchControl;
+      break;
+    case 111:
+      self.cfURLFunctionsSwitch = switchControl;
+      break;
+    case 112:
+      self.timeFunctionsSwitch = switchControl;
+      break;
+    case 113:
+      self.keychainFunctionsSwitch = switchControl;
+      break;
+    }
 
     return cell;
 
@@ -217,6 +347,39 @@ static NSString *const kEnableDlopenHook =
     break;
   case 102:
     key = kEnableDlopenHook;
+    break;
+  case 103:
+    key = kEnableRes9InitHook;
+    break;
+  case 104:
+    key = kEnableClassGetClassMethodHook;
+    break;
+  case 105:
+    key = kEnableSelRegisterNameHook;
+    break;
+  case 106:
+    key = kEnableCFNetworkCopySystemProxySettingsHook;
+    break;
+  case 107:
+    key = kEnableSystemFunctionsHook;
+    break;
+  case 108:
+    key = kEnableCryptoFunctionsHook;
+    break;
+  case 109:
+    key = kEnableHostInfoFunctionsHook;
+    break;
+  case 110:
+    key = kEnableCFStringFunctionsHook;
+    break;
+  case 111:
+    key = kEnableCFURLFunctionsHook;
+    break;
+  case 112:
+    key = kEnableTimeFunctionsHook;
+    break;
+  case 113:
+    key = kEnableKeychainFunctionsHook;
     break;
   default:
     return;
