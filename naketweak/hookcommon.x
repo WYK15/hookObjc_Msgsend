@@ -16,6 +16,10 @@
 #include <mach/mach_host.h>
 #include <QuartzCore/QuartzCore.h>
 #include <Security/Security.h>
+#include <limits.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/stat.h>
 
 // 原始函数指针
 static int (*orig_access)(const char *path, int mode);
@@ -112,8 +116,10 @@ static void new_res_9_init(void) {
 
 // 初始化_res_9_init hook
 void hook_res_9_init(void) {
-    struct rebinding res_rebind = {"_res_9_init", new_res_9_init, (void **)&orig_res_9_init};
-    rebind_symbols(&res_rebind, 1);
+    void *res_9_init_ptr = dlsym(RTLD_DEFAULT, "_res_9_init");
+    if (res_9_init_ptr) {
+        MSHookFunction(res_9_init_ptr, (void *)new_res_9_init, (void **)&orig_res_9_init);
+    }
 }
 
 // hook的class_getClassMethod实现
@@ -125,8 +131,7 @@ static Method new_class_getClassMethod(Class cls, SEL name) {
 
 // 初始化class_getClassMethod hook
 void hook_class_getClassMethod(void) {
-    struct rebinding class_rebind = {"class_getClassMethod", new_class_getClassMethod, (void **)&orig_class_getClassMethod};
-    rebind_symbols(&class_rebind, 1);
+    MSHookFunction((void *)class_getClassMethod, (void *)new_class_getClassMethod, (void **)&orig_class_getClassMethod);
 }
 
 // hook的sel_registerName实现
@@ -137,8 +142,7 @@ static SEL new_sel_registerName(const char *name) {
 
 // 初始化sel_registerName hook
 void hook_sel_registerName(void) {
-    struct rebinding sel_rebind = {"sel_registerName", new_sel_registerName, (void **)&orig_sel_registerName};
-    rebind_symbols(&sel_rebind, 1);
+    MSHookFunction((void *)sel_registerName, (void *)new_sel_registerName, (void **)&orig_sel_registerName);
 }
 
 // hook的CFNetworkCopySystemProxySettings实现
@@ -153,8 +157,7 @@ static CFDictionaryRef new_CFNetworkCopySystemProxySettings(void) {
 
 // 初始化CFNetworkCopySystemProxySettings hook
 void hook_CFNetworkCopySystemProxySettings(void) {
-    struct rebinding proxy_rebind = {"CFNetworkCopySystemProxySettings", new_CFNetworkCopySystemProxySettings, (void **)&orig_CFNetworkCopySystemProxySettings};
-    rebind_symbols(&proxy_rebind, 1);
+    MSHookFunction((void *)CFNetworkCopySystemProxySettings, (void *)new_CFNetworkCopySystemProxySettings, (void **)&orig_CFNetworkCopySystemProxySettings);
 }
 
 // ============ 文件和系统函数的 hook 实现 ============
@@ -166,8 +169,7 @@ static FILE *new_fopen(const char *path, const char *mode) {
 }
 
 void hook_fopen(void) {
-    struct rebinding fopen_rebind = {"fopen", new_fopen, (void **)&orig_fopen};
-    rebind_symbols(&fopen_rebind, 1);
+    MSHookFunction((void *)fopen, (void *)new_fopen, (void **)&orig_fopen);
 }
 
 // hook的getenv实现
@@ -177,8 +179,7 @@ static char *new_getenv(const char *name) {
 }
 
 void hook_getenv(void) {
-    struct rebinding getenv_rebind = {"getenv", new_getenv, (void **)&orig_getenv};
-    rebind_symbols(&getenv_rebind, 1);
+    MSHookFunction((void *)getenv, (void *)new_getenv, (void **)&orig_getenv);
 }
 
 // hook的getifaddrs实现
@@ -188,8 +189,7 @@ static int new_getifaddrs(struct ifaddrs **ifap) {
 }
 
 void hook_getifaddrs(void) {
-    struct rebinding getifaddrs_rebind = {"getifaddrs", new_getifaddrs, (void **)&orig_getifaddrs};
-    rebind_symbols(&getifaddrs_rebind, 1);
+    MSHookFunction((void *)getifaddrs, (void *)new_getifaddrs, (void **)&orig_getifaddrs);
 }
 
 // hook的stat实现
@@ -199,19 +199,20 @@ static int new_stat(const char *path, struct stat *buf) {
 }
 
 void hook_stat(void) {
-    struct rebinding stat_rebind = {"stat", new_stat, (void **)&orig_stat};
-    rebind_symbols(&stat_rebind, 1);
+    MSHookFunction((void *)stat, (void *)new_stat, (void **)&orig_stat);
 }
 
 // hook的sysctl实现
 static int new_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp, size_t newlen) {
     NSLog(@"[HOOK] sysctl called with namelen: %u", namelen);
+    for (u_int i = 0; i < namelen; i++) {
+        NSLog(@"[HOOK] sysctl name[%u] = %d", i, name[i]);
+    }
     return orig_sysctl(name, namelen, oldp, oldlenp, newp, newlen);
 }
 
 void hook_sysctl(void) {
-    struct rebinding sysctl_rebind = {"sysctl", new_sysctl, (void **)&orig_sysctl};
-    rebind_symbols(&sysctl_rebind, 1);
+    MSHookFunction((void *)sysctl, (void *)new_sysctl, (void **)&orig_sysctl);
 }
 
 // hook的sysctlbyname实现
@@ -221,8 +222,7 @@ static int new_sysctlbyname(const char *name, void *oldp, size_t *oldlenp, void 
 }
 
 void hook_sysctlbyname(void) {
-    struct rebinding sysctlbyname_rebind = {"sysctlbyname", new_sysctlbyname, (void **)&orig_sysctlbyname};
-    rebind_symbols(&sysctlbyname_rebind, 1);
+    MSHookFunction((void *)sysctlbyname, (void *)new_sysctlbyname, (void **)&orig_sysctlbyname);
 }
 
 // hook的uname实现
@@ -232,8 +232,7 @@ static int new_uname(struct utsname *name) {
 }
 
 void hook_uname(void) {
-    struct rebinding uname_rebind = {"uname", new_uname, (void **)&orig_uname};
-    rebind_symbols(&uname_rebind, 1);
+    MSHookFunction((void *)uname, (void *)new_uname, (void **)&orig_uname);
 }
 
 // hook的isatty实现
@@ -243,23 +242,30 @@ static int new_isatty(int fd) {
 }
 
 void hook_isatty(void) {
-    struct rebinding isatty_rebind = {"isatty", new_isatty, (void **)&orig_isatty};
-    rebind_symbols(&isatty_rebind, 1);
+    MSHookFunction((void *)isatty, (void *)new_isatty, (void **)&orig_isatty);
 }
 
 // hook的open实现
 static int new_open(const char *path, int oflag, ...) {
-    va_list args;
-    va_start(args, oflag);
-    int mode = va_arg(args, int);
-    va_end(args);
-    NSLog(@"[HOOK] open called with path: %s, oflag: %d", path, oflag);
-    return orig_open(path, oflag, mode);
+    mode_t mode = 0;
+
+    // 如果有 O_CREAT，必须取第三个参数
+    if (oflag & O_CREAT) {
+        va_list args;
+        va_start(args, oflag);
+        mode = va_arg(args, int);
+        va_end(args);
+
+        NSLog(@"[hook_open] %s flags=0x%x mode=%o", path, oflag, mode);
+        return orig_open(path, oflag, mode);
+    }
+
+    NSLog(@"[hook_open] %s flags=0x%x", path, oflag);
+    return orig_open(path, oflag);
 }
 
 void hook_open(void) {
-    struct rebinding open_rebind = {"open", new_open, (void **)&orig_open};
-    rebind_symbols(&open_rebind, 1);
+    MSHookFunction((void *)open, (void *)new_open, (void **)&orig_open);
 }
 
 // hook的opendir实现
@@ -269,19 +275,21 @@ static DIR *new_opendir(const char *filename) {
 }
 
 void hook_opendir(void) {
-    struct rebinding opendir_rebind = {"opendir", new_opendir, (void **)&orig_opendir};
-    rebind_symbols(&opendir_rebind, 1);
+    MSHookFunction((void *)opendir, (void *)new_opendir, (void **)&orig_opendir);
 }
 
 // hook的read实现
 static ssize_t new_read(int fd, void *buf, size_t count) {
+    char path[PATH_MAX] = {0};
     NSLog(@"[HOOK] read called with fd: %d, count: %zu", fd, count);
+    if (fcntl(fd, F_GETPATH, path) == 0) {
+        NSLog(@"[hook_read] %s fd=%d count=%zu", path, fd, count);
+    }
     return orig_read(fd, buf, count);
 }
 
 void hook_read(void) {
-    struct rebinding read_rebind = {"read", new_read, (void **)&orig_read};
-    rebind_symbols(&read_rebind, 1);
+    MSHookFunction((void *)read, (void *)new_read, (void **)&orig_read);
 }
 
 // ============ 加密函数的 hook 实现 ============
@@ -327,8 +335,7 @@ static CFStringRef new_CFStringCreateCopy(CFAllocatorRef alloc, CFStringRef theS
 }
 
 void hook_CFStringCreateCopy(void) {
-    struct rebinding cfstringcopy_rebind = {"CFStringCreateCopy", new_CFStringCreateCopy, (void **)&orig_CFStringCreateCopy};
-    rebind_symbols(&cfstringcopy_rebind, 1);
+    MSHookFunction((void *)CFStringCreateCopy, (void *)new_CFStringCreateCopy, (void **)&orig_CFStringCreateCopy);
 }
 
 // hook的CFStringCreateWithCString实现
@@ -338,8 +345,7 @@ static CFStringRef new_CFStringCreateWithCString(CFAllocatorRef alloc, const cha
 }
 
 void hook_CFStringCreateWithCString(void) {
-    struct rebinding cfstringcstring_rebind = {"CFStringCreateWithCString", new_CFStringCreateWithCString, (void **)&orig_CFStringCreateWithCString};
-    rebind_symbols(&cfstringcstring_rebind, 1);
+    MSHookFunction((void *)CFStringCreateWithCString, (void *)new_CFStringCreateWithCString, (void **)&orig_CFStringCreateWithCString);
 }
 
 // hook的CFStringCreateWithFileSystemRepresentation实现
@@ -349,8 +355,7 @@ static CFStringRef new_CFStringCreateWithFileSystemRepresentation(CFAllocatorRef
 }
 
 void hook_CFStringCreateWithFileSystemRepresentation(void) {
-    struct rebinding cfstringfs_rebind = {"CFStringCreateWithFileSystemRepresentation", new_CFStringCreateWithFileSystemRepresentation, (void **)&orig_CFStringCreateWithFileSystemRepresentation};
-    rebind_symbols(&cfstringfs_rebind, 1);
+    MSHookFunction((void *)CFStringCreateWithFileSystemRepresentation, (void *)new_CFStringCreateWithFileSystemRepresentation, (void **)&orig_CFStringCreateWithFileSystemRepresentation);
 }
 
 // hook的CFStringCreateWithFormat实现
@@ -364,8 +369,7 @@ static CFStringRef new_CFStringCreateWithFormat(CFAllocatorRef alloc, CFDictiona
 }
 
 void hook_CFStringCreateWithFormat(void) {
-    struct rebinding cfstringformat_rebind = {"CFStringCreateWithFormat", new_CFStringCreateWithFormat, (void **)&orig_CFStringCreateWithFormat};
-    rebind_symbols(&cfstringformat_rebind, 1);
+    MSHookFunction((void *)CFStringCreateWithFormat, (void *)new_CFStringCreateWithFormat, (void **)&orig_CFStringCreateWithFormat);
 }
 
 // ============ CoreFoundation URL 函数的 hook 实现 ============
@@ -377,8 +381,7 @@ static CFURLRef new_CFURLCreateWithFileSystemPath(CFAllocatorRef allocator, CFSt
 }
 
 void hook_CFURLCreateWithFileSystemPath(void) {
-    struct rebinding cfurlfs_rebind = {"CFURLCreateWithFileSystemPath", new_CFURLCreateWithFileSystemPath, (void **)&orig_CFURLCreateWithFileSystemPath};
-    rebind_symbols(&cfurlfs_rebind, 1);
+    MSHookFunction((void *)CFURLCreateWithFileSystemPath, (void *)new_CFURLCreateWithFileSystemPath, (void **)&orig_CFURLCreateWithFileSystemPath);
 }
 
 // hook的CFURLCreateWithString实现
@@ -388,8 +391,7 @@ static CFURLRef new_CFURLCreateWithString(CFAllocatorRef allocator, CFStringRef 
 }
 
 void hook_CFURLCreateWithString(void) {
-    struct rebinding cfurlstring_rebind = {"CFURLCreateWithString", new_CFURLCreateWithString, (void **)&orig_CFURLCreateWithString};
-    rebind_symbols(&cfurlstring_rebind, 1);
+    MSHookFunction((void *)CFURLCreateWithString, (void *)new_CFURLCreateWithString, (void **)&orig_CFURLCreateWithString);
 }
 
 // ============ 时间函数的 hook 实现 ============
@@ -413,8 +415,7 @@ static OSStatus new_SecItemAdd(CFDictionaryRef attributes, CFTypeRef *result) {
 }
 
 void hook_SecItemAdd(void) {
-    struct rebinding secitemadd_rebind = {"SecItemAdd", new_SecItemAdd, (void **)&orig_SecItemAdd};
-    rebind_symbols(&secitemadd_rebind, 1);
+    MSHookFunction((void *)SecItemAdd, (void *)new_SecItemAdd, (void **)&orig_SecItemAdd);
 }
 
 // hook的SecItemUpdate实现
@@ -424,8 +425,7 @@ static OSStatus new_SecItemUpdate(CFDictionaryRef query, CFDictionaryRef attribu
 }
 
 void hook_SecItemUpdate(void) {
-    struct rebinding secitemupdate_rebind = {"SecItemUpdate", new_SecItemUpdate, (void **)&orig_SecItemUpdate};
-    rebind_symbols(&secitemupdate_rebind, 1);
+    MSHookFunction((void *)SecItemUpdate, (void *)new_SecItemUpdate, (void **)&orig_SecItemUpdate);
 }
 
 // hook的SecItemDelete实现
@@ -435,8 +435,7 @@ static OSStatus new_SecItemDelete(CFDictionaryRef query) {
 }
 
 void hook_SecItemDelete(void) {
-    struct rebinding secitemdelete_rebind = {"SecItemDelete", new_SecItemDelete, (void **)&orig_SecItemDelete};
-    rebind_symbols(&secitemdelete_rebind, 1);
+    MSHookFunction((void *)SecItemDelete, (void *)new_SecItemDelete, (void **)&orig_SecItemDelete);
 }
 
 // hook的SecItemCopyMatching实现
@@ -446,6 +445,5 @@ static OSStatus new_SecItemCopyMatching(CFDictionaryRef query, CFTypeRef *result
 }
 
 void hook_SecItemCopyMatching(void) {
-    struct rebinding secitemcopy_rebind = {"SecItemCopyMatching", new_SecItemCopyMatching, (void **)&orig_SecItemCopyMatching};
-    rebind_symbols(&secitemcopy_rebind, 1);
+    MSHookFunction((void *)SecItemCopyMatching, (void *)new_SecItemCopyMatching, (void **)&orig_SecItemCopyMatching);
 }

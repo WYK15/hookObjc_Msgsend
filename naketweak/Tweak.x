@@ -20,7 +20,20 @@ static BOOL enableSelRegisterNameHook = NO;
 static BOOL enableCFNetworkCopySystemProxySettingsHook = NO;
 
 // 新增的 Hook 开关（按类别分组）
-static BOOL enableSystemFunctionsHook = NO;  // 文件和系统函数
+// 系统函数独立开关
+static BOOL enableFopenHook = NO;
+static BOOL enableGetenvHook = NO;
+static BOOL enableGetifaddrsHook = NO;
+static BOOL enableStatHook = NO;
+static BOOL enableSysctlHook = NO;
+static BOOL enableSysctlbynameHook = NO;
+static BOOL enableUnameHook = NO;
+static BOOL enableIsattyHook = NO;
+static BOOL enableOpenHook = NO;
+static BOOL enableOpendirHook = NO;
+static BOOL enableReadHook = NO;
+
+// 其他类别的 Hook 开关
 static BOOL enableCryptoFunctionsHook = NO;  // 加密函数
 static BOOL enableHostInfoFunctionsHook = NO;  // 主机信息函数
 static BOOL enableCFStringFunctionsHook = NO;  // CoreFoundation 字符串函数
@@ -48,8 +61,20 @@ static void loadHookSettings() {
         enableSelRegisterNameHook = [prefs[@"enableSelRegisterName"] boolValue];
         enableCFNetworkCopySystemProxySettingsHook = [prefs[@"enableCFNetworkCopySystemProxySettings"] boolValue];
         
-        // 新增的 Hook 开关配置读取
-        enableSystemFunctionsHook = [prefs[@"enableSystemFunctions"] boolValue];
+        // 系统函数独立开关配置读取
+        enableFopenHook = [prefs[@"enableFopen"] boolValue];
+        enableGetenvHook = [prefs[@"enableGetenv"] boolValue];
+        enableGetifaddrsHook = [prefs[@"enableGetifaddrs"] boolValue];
+        enableStatHook = [prefs[@"enableStat"] boolValue];
+        enableSysctlHook = [prefs[@"enableSysctl"] boolValue];
+        enableSysctlbynameHook = [prefs[@"enableSysctlbyname"] boolValue];
+        enableUnameHook = [prefs[@"enableUname"] boolValue];
+        enableIsattyHook = [prefs[@"enableIsatty"] boolValue];
+        enableOpenHook = [prefs[@"enableOpen"] boolValue];
+        enableOpendirHook = [prefs[@"enableOpendir"] boolValue];
+        enableReadHook = [prefs[@"enableRead"] boolValue];
+        
+        // 其他类别的 Hook 开关配置读取
         enableCryptoFunctionsHook = [prefs[@"enableCryptoFunctions"] boolValue];
         enableHostInfoFunctionsHook = [prefs[@"enableHostInfoFunctions"] boolValue];
         enableCFStringFunctionsHook = [prefs[@"enableCFStringFunctions"] boolValue];
@@ -156,22 +181,63 @@ static void prefsChanged(CFNotificationCenterRef center, void *observer, CFStrin
         hook_CFNetworkCopySystemProxySettings();
     }
     
-    // 新增的 Hook 初始化
-    if (enableSystemFunctionsHook) {
-        NSLog(@"[nake] Enabling system functions hook");
+    // 系统函数独立 Hook 初始化
+    if (enableFopenHook) {
+        NSLog(@"[nake] Enabling fopen hook");
         hook_fopen();
+    }
+    
+    if (enableGetenvHook) {
+        NSLog(@"[nake] Enabling getenv hook");
         hook_getenv();
+    }
+    
+    if (enableGetifaddrsHook) {
+        NSLog(@"[nake] Enabling getifaddrs hook");
         hook_getifaddrs();
+    }
+    
+    if (enableStatHook) {
+        NSLog(@"[nake] Enabling stat hook");
         hook_stat();
+    }
+    
+    if (enableSysctlHook) {
+        NSLog(@"[nake] Enabling sysctl hook");
         hook_sysctl();
+    }
+    
+    if (enableSysctlbynameHook) {
+        NSLog(@"[nake] Enabling sysctlbyname hook");
         hook_sysctlbyname();
+    }
+    
+    if (enableUnameHook) {
+        NSLog(@"[nake] Enabling uname hook");
         hook_uname();
+    }
+    
+    if (enableIsattyHook) {
+        NSLog(@"[nake] Enabling isatty hook");
         hook_isatty();
+    }
+    
+    if (enableOpenHook) {
+        NSLog(@"[nake] Enabling open hook");
         hook_open();
+    }
+    
+    if (enableOpendirHook) {
+        NSLog(@"[nake] Enabling opendir hook");
         hook_opendir();
+    }
+    
+    if (enableReadHook) {
+        NSLog(@"[nake] Enabling read hook");
         hook_read();
     }
     
+    // 其他类别的 Hook 初始化
     if (enableCryptoFunctionsHook) {
         NSLog(@"[nake] Enabling crypto functions hook");
         hook_CC_SHA256();

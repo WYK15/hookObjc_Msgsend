@@ -23,7 +23,20 @@ static NSString *const kEnableSelRegisterNameHook = @"enableSelRegisterName";
 static NSString *const kEnableCFNetworkCopySystemProxySettingsHook = @"enableCFNetworkCopySystemProxySettings";
 
 // 新增的 Hook 控制键（按类别分组）
-static NSString *const kEnableSystemFunctionsHook = @"enableSystemFunctions";
+// 系统函数独立控制键
+static NSString *const kEnableFopenHook = @"enableFopen";
+static NSString *const kEnableGetenvHook = @"enableGetenv";
+static NSString *const kEnableGetifaddrsHook = @"enableGetifaddrs";
+static NSString *const kEnableStatHook = @"enableStat";
+static NSString *const kEnableSysctlHook = @"enableSysctl";
+static NSString *const kEnableSysctlbynameHook = @"enableSysctlbyname";
+static NSString *const kEnableUnameHook = @"enableUname";
+static NSString *const kEnableIsattyHook = @"enableIsatty";
+static NSString *const kEnableOpenHook = @"enableOpen";
+static NSString *const kEnableOpendirHook = @"enableOpendir";
+static NSString *const kEnableReadHook = @"enableRead";
+
+// 其他类别的 Hook 控制键
 static NSString *const kEnableCryptoFunctionsHook = @"enableCryptoFunctions";
 static NSString *const kEnableHostInfoFunctionsHook = @"enableHostInfoFunctions";
 static NSString *const kEnableCFStringFunctionsHook = @"enableCFStringFunctions";
@@ -40,8 +53,21 @@ static NSString *const kEnableKeychainFunctionsHook = @"enableKeychainFunctions"
 @property (nonatomic, strong) UISwitch *selRegisterNameSwitch;
 @property (nonatomic, strong) UISwitch *cfNetworkCopySystemProxySettingsSwitch;
 
-// 新增的 Hook 开关属性
-@property (nonatomic, strong) UISwitch *systemFunctionsSwitch;
+// 新增的 Hook 开关属性（按类别分组）
+// 系统函数独立开关属性
+@property (nonatomic, strong) UISwitch *fopenSwitch;
+@property (nonatomic, strong) UISwitch *getenvSwitch;
+@property (nonatomic, strong) UISwitch *getifaddrsSwitch;
+@property (nonatomic, strong) UISwitch *statSwitch;
+@property (nonatomic, strong) UISwitch *sysctlSwitch;
+@property (nonatomic, strong) UISwitch *sysctlbynameSwitch;
+@property (nonatomic, strong) UISwitch *unameSwitch;
+@property (nonatomic, strong) UISwitch *isattySwitch;
+@property (nonatomic, strong) UISwitch *openSwitch;
+@property (nonatomic, strong) UISwitch *opendirSwitch;
+@property (nonatomic, strong) UISwitch *readSwitch;
+
+// 其他类别的 Hook 开关属性
 @property (nonatomic, strong) UISwitch *cryptoFunctionsSwitch;
 @property (nonatomic, strong) UISwitch *hostInfoFunctionsSwitch;
 @property (nonatomic, strong) UISwitch *cfStringFunctionsSwitch;
@@ -81,7 +107,7 @@ static NSString *const kEnableKeychainFunctionsHook = @"enableKeychainFunctions"
 - (NSInteger)tableView:(UITableView *)tableView
     numberOfRowsInSection:(NSInteger)section {
   if (section == 0) {
-    return 14; // 7个原有 Hook 开关 + 7个新增 Hook 开关
+    return 24; // 7个原有 Hook 开关 + 11个系统函数独立开关 + 6个其他类别 Hook 开关
   } else {
     return 2; // 全局开关 + 查看应用列表按钮
   }
@@ -157,40 +183,92 @@ static NSString *const kEnableKeychainFunctionsHook = @"enableKeychainFunctions"
       key = kEnableCFNetworkCopySystemProxySettingsHook;
       tag = 106;
       break;
+    // 系统函数独立开关
     case 7:
-      title = @"启用系统函数 Hook (fopen, getenv, etc.)";
-      key = kEnableSystemFunctionsHook;
+      title = @"启用 fopen Hook";
+      key = kEnableFopenHook;
       tag = 107;
       break;
     case 8:
-      title = @"启用加密函数 Hook (CC_SHA256)";
-      key = kEnableCryptoFunctionsHook;
+      title = @"启用 getenv Hook";
+      key = kEnableGetenvHook;
       tag = 108;
       break;
     case 9:
-      title = @"启用主机信息 Hook (host_info, etc.)";
-      key = kEnableHostInfoFunctionsHook;
+      title = @"启用 getifaddrs Hook";
+      key = kEnableGetifaddrsHook;
       tag = 109;
       break;
     case 10:
-      title = @"启用 CFString Hook";
-      key = kEnableCFStringFunctionsHook;
+      title = @"启用 stat Hook";
+      key = kEnableStatHook;
       tag = 110;
       break;
     case 11:
-      title = @"启用 CFURL Hook";
-      key = kEnableCFURLFunctionsHook;
+      title = @"启用 sysctl Hook";
+      key = kEnableSysctlHook;
       tag = 111;
       break;
     case 12:
-      title = @"启用时间函数 Hook (CACurrentMediaTime)";
-      key = kEnableTimeFunctionsHook;
+      title = @"启用 sysctlbyname Hook";
+      key = kEnableSysctlbynameHook;
       tag = 112;
       break;
     case 13:
+      title = @"启用 uname Hook";
+      key = kEnableUnameHook;
+      tag = 113;
+      break;
+    case 14:
+      title = @"启用 isatty Hook";
+      key = kEnableIsattyHook;
+      tag = 114;
+      break;
+    case 15:
+      title = @"启用 open Hook";
+      key = kEnableOpenHook;
+      tag = 115;
+      break;
+    case 16:
+      title = @"启用 opendir Hook";
+      key = kEnableOpendirHook;
+      tag = 116;
+      break;
+    case 17:
+      title = @"启用 read Hook";
+      key = kEnableReadHook;
+      tag = 117;
+      break;
+    // 其他类别的 Hook 开关
+    case 18:
+      title = @"启用加密函数 Hook (CC_SHA256)";
+      key = kEnableCryptoFunctionsHook;
+      tag = 118;
+      break;
+    case 19:
+      title = @"启用主机信息 Hook (host_info, etc.)";
+      key = kEnableHostInfoFunctionsHook;
+      tag = 119;
+      break;
+    case 20:
+      title = @"启用 CFString Hook";
+      key = kEnableCFStringFunctionsHook;
+      tag = 120;
+      break;
+    case 21:
+      title = @"启用 CFURL Hook";
+      key = kEnableCFURLFunctionsHook;
+      tag = 121;
+      break;
+    case 22:
+      title = @"启用时间函数 Hook (CACurrentMediaTime)";
+      key = kEnableTimeFunctionsHook;
+      tag = 122;
+      break;
+    case 23:
       title = @"启用 Keychain Hook";
       key = kEnableKeychainFunctionsHook;
-      tag = 113;
+      tag = 123;
       break;
     default:
       title = @"";
@@ -236,25 +314,57 @@ static NSString *const kEnableKeychainFunctionsHook = @"enableKeychainFunctions"
     case 106:
       self.cfNetworkCopySystemProxySettingsSwitch = switchControl;
       break;
+    // 系统函数独立switch引用
     case 107:
-      self.systemFunctionsSwitch = switchControl;
+      self.fopenSwitch = switchControl;
       break;
     case 108:
-      self.cryptoFunctionsSwitch = switchControl;
+      self.getenvSwitch = switchControl;
       break;
     case 109:
-      self.hostInfoFunctionsSwitch = switchControl;
+      self.getifaddrsSwitch = switchControl;
       break;
     case 110:
-      self.cfStringFunctionsSwitch = switchControl;
+      self.statSwitch = switchControl;
       break;
     case 111:
-      self.cfURLFunctionsSwitch = switchControl;
+      self.sysctlSwitch = switchControl;
       break;
     case 112:
-      self.timeFunctionsSwitch = switchControl;
+      self.sysctlbynameSwitch = switchControl;
       break;
     case 113:
+      self.unameSwitch = switchControl;
+      break;
+    case 114:
+      self.isattySwitch = switchControl;
+      break;
+    case 115:
+      self.openSwitch = switchControl;
+      break;
+    case 116:
+      self.opendirSwitch = switchControl;
+      break;
+    case 117:
+      self.readSwitch = switchControl;
+      break;
+    // 其他类别的switch引用
+    case 118:
+      self.cryptoFunctionsSwitch = switchControl;
+      break;
+    case 119:
+      self.hostInfoFunctionsSwitch = switchControl;
+      break;
+    case 120:
+      self.cfStringFunctionsSwitch = switchControl;
+      break;
+    case 121:
+      self.cfURLFunctionsSwitch = switchControl;
+      break;
+    case 122:
+      self.timeFunctionsSwitch = switchControl;
+      break;
+    case 123:
       self.keychainFunctionsSwitch = switchControl;
       break;
     }
@@ -360,25 +470,57 @@ static NSString *const kEnableKeychainFunctionsHook = @"enableKeychainFunctions"
   case 106:
     key = kEnableCFNetworkCopySystemProxySettingsHook;
     break;
+  // 系统函数独立开关
   case 107:
-    key = kEnableSystemFunctionsHook;
+    key = kEnableFopenHook;
     break;
   case 108:
-    key = kEnableCryptoFunctionsHook;
+    key = kEnableGetenvHook;
     break;
   case 109:
-    key = kEnableHostInfoFunctionsHook;
+    key = kEnableGetifaddrsHook;
     break;
   case 110:
-    key = kEnableCFStringFunctionsHook;
+    key = kEnableStatHook;
     break;
   case 111:
-    key = kEnableCFURLFunctionsHook;
+    key = kEnableSysctlHook;
     break;
   case 112:
-    key = kEnableTimeFunctionsHook;
+    key = kEnableSysctlbynameHook;
     break;
   case 113:
+    key = kEnableUnameHook;
+    break;
+  case 114:
+    key = kEnableIsattyHook;
+    break;
+  case 115:
+    key = kEnableOpenHook;
+    break;
+  case 116:
+    key = kEnableOpendirHook;
+    break;
+  case 117:
+    key = kEnableReadHook;
+    break;
+  // 其他类别的 Hook 开关
+  case 118:
+    key = kEnableCryptoFunctionsHook;
+    break;
+  case 119:
+    key = kEnableHostInfoFunctionsHook;
+    break;
+  case 120:
+    key = kEnableCFStringFunctionsHook;
+    break;
+  case 121:
+    key = kEnableCFURLFunctionsHook;
+    break;
+  case 122:
+    key = kEnableTimeFunctionsHook;
+    break;
+  case 123:
     key = kEnableKeychainFunctionsHook;
     break;
   default:
