@@ -17,13 +17,15 @@ void hook_fopen(void);
 void hook_getenv(void);
 void hook_getifaddrs(void);
 void hook_stat(void);
+void hook_statfs(void);
 void hook_sysctl(void);
 void hook_sysctlbyname(void);
 void hook_uname(void);
 void hook_isatty(void);
-void hook_open(void);
 void hook_opendir(void);
 void hook_read(void);
+void hook___dyld_image_count(void);
+void hook___dyld_get_image_vmaddr_slide(void);
 
 // 加密函数
 void hook_CC_SHA256(void);

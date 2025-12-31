@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
+#include <sys/mount.h>
 #include <sys/sysctl.h>
 #include <sys/utsname.h>
 #include <unistd.h>
@@ -20,6 +21,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <mach-o/dyld.h>
 
 // 原始函数指针
 static int (*orig_access)(const char *path, int mode);
@@ -35,13 +37,15 @@ static FILE *(*orig_fopen)(const char *path, const char *mode);
 static char *(*orig_getenv)(const char *name);
 static int (*orig_getifaddrs)(struct ifaddrs **ifap);
 static int (*orig_stat)(const char *path, struct stat *buf);
+static int (*orig_statfs)(const char *path, struct statfs *buf);
 static int (*orig_sysctl)(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp, size_t newlen);
 static int (*orig_sysctlbyname)(const char *name, void *oldp, size_t *oldlenp, void *newp, size_t newlen);
 static int (*orig_uname)(struct utsname *name);
 static int (*orig_isatty)(int fd);
-static int (*orig_open)(const char *path, int oflag, ...);
 static DIR *(*orig_opendir)(const char *filename);
 static ssize_t (*orig_read)(int fd, void *buf, size_t count);
+static uint32_t (*orig___dyld_image_count)(void);
+static intptr_t (*orig___dyld_get_image_vmaddr_slide)(uint32_t image_index);
 
 // 加密函数指针
 static unsigned char *(*orig_CC_SHA256)(const void *data, CC_LONG len, unsigned char *md);
@@ -202,6 +206,36 @@ void hook_stat(void) {
     MSHookFunction((void *)stat, (void *)new_stat, (void **)&orig_stat);
 }
 
+// hook的statfs实现
+static int new_statfs(const char *path, struct statfs *buf) {
+    NSLog(@"[HOOK] statfs called with path: %s", path);
+    return orig_statfs(path, buf);
+}
+
+void hook_statfs(void) {
+    MSHookFunction((void *)statfs, (void *)new_statfs, (void **)&orig_statfs);
+}
+
+// hook的__dyld_image_count实现
+static uint32_t new___dyld_image_count(void) {
+    NSLog(@"[HOOK] __dyld_image_count called");
+    return orig___dyld_image_count();
+}
+
+void hook___dyld_image_count(void) {
+    MSHookFunction(_dyld_image_count, (void *)new___dyld_image_count, (void **)&orig___dyld_image_count);
+}
+
+// hook的__dyld_get_image_vmaddr_slide实现
+static intptr_t new___dyld_get_image_vmaddr_slide(uint32_t image_index) {
+    NSLog(@"[HOOK] __dyld_get_image_vmaddr_slide called with image_index: %u", image_index);
+    return orig___dyld_get_image_vmaddr_slide(image_index);
+}
+
+void hook___dyld_get_image_vmaddr_slide(void) {
+    MSHookFunction(_dyld_get_image_vmaddr_slide, (void *)new___dyld_get_image_vmaddr_slide, (void **)&orig___dyld_get_image_vmaddr_slide);
+}
+
 // hook的sysctl实现
 static int new_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp, size_t newlen) {
     NSLog(@"[HOOK] sysctl called with namelen: %u", namelen);
@@ -243,29 +277,6 @@ static int new_isatty(int fd) {
 
 void hook_isatty(void) {
     MSHookFunction((void *)isatty, (void *)new_isatty, (void **)&orig_isatty);
-}
-
-// hook的open实现
-static int new_open(const char *path, int oflag, ...) {
-    mode_t mode = 0;
-
-    // 如果有 O_CREAT，必须取第三个参数
-    if (oflag & O_CREAT) {
-        va_list args;
-        va_start(args, oflag);
-        mode = va_arg(args, int);
-        va_end(args);
-
-        NSLog(@"[hook_open] %s flags=0x%x mode=%o", path, oflag, mode);
-        return orig_open(path, oflag, mode);
-    }
-
-    NSLog(@"[hook_open] %s flags=0x%x", path, oflag);
-    return orig_open(path, oflag);
-}
-
-void hook_open(void) {
-    MSHookFunction((void *)open, (void *)new_open, (void **)&orig_open);
 }
 
 // hook的opendir实现

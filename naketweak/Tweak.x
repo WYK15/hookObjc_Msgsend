@@ -25,13 +25,15 @@ static BOOL enableFopenHook = NO;
 static BOOL enableGetenvHook = NO;
 static BOOL enableGetifaddrsHook = NO;
 static BOOL enableStatHook = NO;
+static BOOL enableStatfsHook = NO;
 static BOOL enableSysctlHook = NO;
 static BOOL enableSysctlbynameHook = NO;
 static BOOL enableUnameHook = NO;
 static BOOL enableIsattyHook = NO;
-static BOOL enableOpenHook = NO;
 static BOOL enableOpendirHook = NO;
 static BOOL enableReadHook = NO;
+static BOOL enableDyldImageCountHook = NO;
+static BOOL enableDyldGetImageVmaddrSlideHook = NO;
 
 // 其他类别的 Hook 开关
 static BOOL enableCryptoFunctionsHook = NO;  // 加密函数
@@ -66,13 +68,15 @@ static void loadHookSettings() {
         enableGetenvHook = [prefs[@"enableGetenv"] boolValue];
         enableGetifaddrsHook = [prefs[@"enableGetifaddrs"] boolValue];
         enableStatHook = [prefs[@"enableStat"] boolValue];
+        enableStatfsHook = [prefs[@"enableStatfs"] boolValue];
         enableSysctlHook = [prefs[@"enableSysctl"] boolValue];
         enableSysctlbynameHook = [prefs[@"enableSysctlbyname"] boolValue];
         enableUnameHook = [prefs[@"enableUname"] boolValue];
         enableIsattyHook = [prefs[@"enableIsatty"] boolValue];
-        enableOpenHook = [prefs[@"enableOpen"] boolValue];
         enableOpendirHook = [prefs[@"enableOpendir"] boolValue];
         enableReadHook = [prefs[@"enableRead"] boolValue];
+        enableDyldImageCountHook = [prefs[@"enableDyldImageCount"] boolValue];
+        enableDyldGetImageVmaddrSlideHook = [prefs[@"enableDyldGetImageVmaddrSlide"] boolValue];
         
         // 其他类别的 Hook 开关配置读取
         enableCryptoFunctionsHook = [prefs[@"enableCryptoFunctions"] boolValue];
@@ -202,6 +206,11 @@ static void prefsChanged(CFNotificationCenterRef center, void *observer, CFStrin
         hook_stat();
     }
     
+    if (enableStatfsHook) {
+        NSLog(@"[nake] Enabling statfs hook");
+        hook_statfs();
+    }
+    
     if (enableSysctlHook) {
         NSLog(@"[nake] Enabling sysctl hook");
         hook_sysctl();
@@ -222,11 +231,6 @@ static void prefsChanged(CFNotificationCenterRef center, void *observer, CFStrin
         hook_isatty();
     }
     
-    if (enableOpenHook) {
-        NSLog(@"[nake] Enabling open hook");
-        hook_open();
-    }
-    
     if (enableOpendirHook) {
         NSLog(@"[nake] Enabling opendir hook");
         hook_opendir();
@@ -235,6 +239,16 @@ static void prefsChanged(CFNotificationCenterRef center, void *observer, CFStrin
     if (enableReadHook) {
         NSLog(@"[nake] Enabling read hook");
         hook_read();
+    }
+    
+    if (enableDyldImageCountHook) {
+        NSLog(@"[nake] Enabling __dyld_image_count hook");
+        hook___dyld_image_count();
+    }
+    
+    if (enableDyldGetImageVmaddrSlideHook) {
+        NSLog(@"[nake] Enabling __dyld_get_image_vmaddr_slide hook");
+        hook___dyld_get_image_vmaddr_slide();
     }
     
     // 其他类别的 Hook 初始化
