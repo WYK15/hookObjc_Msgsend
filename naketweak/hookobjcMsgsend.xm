@@ -34,6 +34,8 @@ void printSpecificParam_fish(id self, SEL _cmd, void* param1, void* param2)
         NSLog(@"[HOOK] class: %@, method: %s, objects: %@", self, selector, param1);
     } else if ( strcmp( selector, "hasPrefix:" ) == 0 ){
         NSLog(@"[HOOK] class: %@, method: %s, prefix: %@", self, selector, param1);
+    } else if ( strcmp( selector, "hasSuffix:" ) == 0 ){
+        NSLog(@"[HOOK] class: %@, method: %s, suffix: %@", self, selector, param1);
     } else if ( strcmp( selector, "UTF8String" ) == 0 ){
         NSLog(@"[HOOK] class: %@, method: %s", self, selector);
     } else if ( strcmp( selector, "containsString:" ) == 0) {
