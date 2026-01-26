@@ -8,7 +8,12 @@
 __unused static id (*orig_objc_msgSend)(id, SEL, ...);
 void printSpecificParam_fish(id self, SEL _cmd, void* param1, void* param2)
 {
+    const char *cname = object_getClassName(self);
     const char * selector = sel_getName(_cmd);
+    if (strncmp(cname, "_NSPlaceholder", 14) == 0 || strncmp(cname, "__NSPlaceholder", 15) == 0) {
+        NSLog(@"[HOOK] selfclass is _NSPlaceholder*, classname: %s, method: %s", cname, selector);
+        return;
+    }
 
     if ( strcmp( selector, "isEqualToString:" ) == 0) {
         NSLog(@"[HOOK] class: %@, method: %s, str: %@", self, selector, param1);
