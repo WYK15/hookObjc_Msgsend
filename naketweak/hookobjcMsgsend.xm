@@ -16,159 +16,158 @@ void printSpecificParam_fish(id self, SEL _cmd, void* param1, void* param2)
     }
 
     if ( strcmp( selector, "isEqualToString:" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, str: %@", self, selector, param1);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@, str: %@", cname, selector, self, param1);
     } else if ( strcmp( selector, "fileExistsAtPath:" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, path: %@", self, selector, param1);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@, path: %@", cname, selector, self, param1);
     } else if ( strcmp( selector, "setObject:forKey:" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, object: %@, key: %@", self, selector, param1, param2);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@, object: %@, key: %@", cname, selector, self, param1, param2);
     } else if ( strcmp( selector, "dataUsingEncoding:" ) == 0 ){
-        NSLog(@"[HOOK] class: %@, method: %s, encoding: %lu", self, selector, (NSUInteger)param1);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@, encoding: %lu", cname, selector, self, (NSUInteger)param1);
     } else if ( strcmp( selector, "objectForKey:" ) == 0 ){
-        NSLog(@"[HOOK] class: %@, method: %s, key: %@", self, selector, param1);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@, key: %@", cname, selector, self, param1);
     } else if ( strcmp( selector, "stringByAppendingString:" ) == 0 ){
-        NSLog(@"[HOOK] class: %@, method: %s, self: %@, str2: %@", self, selector, self, param1);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@, str2: %@", cname, selector, self, param1);
     } else if ( strcmp( selector, "dataWithJSONObject:options:error:" ) == 0 ){
-        NSLog(@"[HOOK] class: %@, method: %s, json: %@", self, selector, param1);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@, json: %@", cname, selector, self, param1);
     } else if ( strcmp( selector, "stringWithUTF8String:" ) == 0 ){
-        NSLog(@"[HOOK] class: %@, method: %s, utf8str: %s", self, selector, (char*)param1);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@, utf8str: %s", cname, selector, self, (char*)param1);
     } else if ( strcmp( selector, "appendFormat:" ) == 0 ){
-        NSLog(@"[HOOK] class: %@, method: %s, format: %@", self, selector, param1);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@, format: %@", cname, selector, self, param1);
     } else if ( strcmp( selector, "stringWithFormat:" ) == 0 ){
-        NSLog(@"[HOOK] class: %@, method: %s, format: %@", self, selector, param1);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@, format: %@", cname, selector, self, param1);
     } else if ( strcmp( selector, "dictionaryWithObjectsAndKeys:" ) == 0 ){
-        NSLog(@"[HOOK] class: %@, method: %s, objects: %@", self, selector, param1);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@, objects: %@", cname, selector, self, param1);
     } else if ( strcmp( selector, "hasPrefix:" ) == 0 ){
-        NSLog(@"[HOOK] class: %@, method: %s, prefix: %@", self, selector, param1);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@, prefix: %@", cname, selector, self, param1);
     } else if ( strcmp( selector, "hasSuffix:" ) == 0 ){
-        NSLog(@"[HOOK] class: %@, method: %s, suffix: %@", self, selector, param1);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@, suffix: %@", cname, selector, self, param1);
     } else if ( strcmp( selector, "UTF8String" ) == 0 ){
-        NSLog(@"[HOOK] class: %@, method: %s", self, selector);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@", cname, selector, self);
     } else if ( strcmp( selector, "containsString:" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, subStr: %@", self, selector, param1);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@, subStr: %@", cname, selector, self, param1);
     } else if ( strcmp( selector, "setText:" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, text: %@", self, selector, param1);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@, text: %@", cname, selector, self, param1);
     } else if ( strcmp( selector, "objectForKeyedSubscript:" ) == 0 ){
-        NSLog(@"[HOOK] class: %@, method: %s, key: %@", self, selector, param1);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@, key: %@", cname, selector, self, param1);
     } else if ( strcmp( selector, "attributesOfItemAtPath:error:" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, path: %@", self, selector, param1);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@, path: %@", cname, selector, self, param1);
     } else if ( strcmp( selector, "initFileURLWithPath:" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, path: %@", self, selector, param1);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@, path: %@", cname, selector, self, param1);
     } else if ( strcmp( selector, "initWithFileURL:" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, url: %@", self, selector, param1);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@, url: %@", cname, selector, self, param1);
     } else if ( strcmp( selector, "initWithContentsOfURL:options:error:" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, url: %@", self, selector, param1);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@, url: %@", cname, selector, self, param1);
     } else if ( strcmp( selector, "valueForKey:" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, key: %@", self, selector, param1);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@, key: %@", cname, selector, self, param1);
     } else if ( strcmp( selector, "URLWithString:" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, urlStr: %@", self, selector, param1);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@, urlStr: %@", cname, selector, self, param1);
     } else if ( strcmp( selector, "stringWithContentsOfFile:encoding:error:" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, path: %@", self, selector, param1);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@, path: %@", cname, selector, self, param1);
     } else if ( strcmp( selector, "stringWithContentsOfURL:encoding:error:" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, url: %@", self, selector, param1);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@, url: %@", cname, selector, self, param1);
     } else if ( strcmp( selector, "writeToFile:atomically:encoding:error:" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, path: %@", self, selector, param1);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@, path: %@", cname, selector, self, param1);
     } else if ( strcmp( selector, "writeToURL:atomically:encoding:error:" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, url: %@", self, selector, param1);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@, url: %@", cname, selector, self, param1);
     } else if ( strcmp( selector, "JSONString" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, self: %@", self, selector, self);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@", cname, selector, self);
     } else if ( strcmp( selector, "JSONObjectWithData:options:error:" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, data: %@", self, selector, param1);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@, data: %@", cname, selector, self, param1);
     } else if ( strcmp( selector, "base64EncodedStringWithOptions:" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, self: %@", self, selector, self);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@", cname, selector, self);
     } else if ( strcmp( selector, "base64EncodedDataWithOptions:" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, self: %@", self, selector, self);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@", cname, selector, self);
     } else if ( strcmp( selector, "initWithBase64EncodedString:options:" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, base64Str: %@", self, selector, param1);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@, base64Str: %@", cname, selector, self, param1);
     } else if ( strcmp( selector, "initWithBase64EncodedData:options:" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, data: %@", self, selector, param1);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@, data: %@", cname, selector, self, param1);
     } else if ( strcmp( selector, "MD5String" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, self: %@", self, selector, self);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@", cname, selector, self);
     } else if ( strcmp( selector, "SHA256String" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, self: %@", self, selector, self);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@", cname, selector, self);
     } else if ( strcmp( selector, "HMACWithAlgorithm:key:" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, key: %@", self, selector, param2);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@, key: %@", cname, selector, self, param2);
     } else if ( strcmp( selector, "substringFromIndex:" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, self: %@, index: %lu", self, selector, self, (NSUInteger)param1);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@, index: %lu", cname, selector, self, (NSUInteger)param1);
     } else if ( strcmp( selector, "substringToIndex:" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, self: %@, index: %lu", self, selector, self, (NSUInteger)param1);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@, index: %lu", cname, selector, self, (NSUInteger)param1);
     } else if ( strcmp( selector, "substringWithRange:" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, location: %lu, length: %lu", self, selector, (NSUInteger)param1, (NSUInteger)param2);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@, location: %lu, length: %lu", cname, selector, self, (NSUInteger)param1, (NSUInteger)param2);
     } else if ( strcmp( selector, "rangeOfString:" ) == 0) {
         // 这个打印日志太多了，根据条件打印
-        //NSLog(@"[HOOK] class: %@, method: %s, self: %@, searchStr: %@", self, selector, self, param1);
+        //NSLog(@"[HOOK] class: %s, method: %s, self: %@, searchStr: %@", cname, selector, self, param1);
     } else if ( strcmp( selector, "componentsSeparatedByString:" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, separator: %@", self, selector, param1);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@, separator: %@", cname, selector, self, param1);
     } else if ( strcmp( selector, "stringByReplacingOccurrencesOfString:withString:" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, target: %@, replacement: %@", self, selector, param1, param2);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@, target: %@, replacement: %@", cname, selector, self, param1, param2);
     } else if ( strcmp( selector, "lowercaseString" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, self: %@", self, selector, self);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@", cname, selector, self);
     } else if ( strcmp( selector, "uppercaseString" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, self: %@", self, selector, self);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@", cname, selector, self);
     } else if ( strcmp( selector, "intValue" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, self: %@", self, selector, self);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@", cname, selector, self);
     } else if ( strcmp( selector, "integerValue" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, self: %@", self, selector, self);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@", cname, selector, self);
     } else if ( strcmp( selector, "floatValue" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, self: %@", self, selector, self);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@", cname, selector, self);
     } else if ( strcmp( selector, "doubleValue" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, self: %@", self, selector, self);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@", cname, selector, self);
     } else if ( strcmp( selector, "boolValue" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, self: %@", self, selector, self);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@", cname, selector, self);
     } else if ( strcmp( selector, "arrayWithArray:" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, array: %@", self, selector, param1);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@, array: %@", cname, selector, self, param1);
     } else if ( strcmp( selector, "arrayWithObjects:count:" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, count: %lu", self, selector, (NSUInteger)param2);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@, count: %lu", cname, selector, self, (NSUInteger)param2);
     } else if ( strcmp( selector, "addObject:" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, object: %@", self, selector, param1);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@, object: %@", cname, selector, self, param1);
     } else if ( strcmp( selector, "removeObject:" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, object: %@", self, selector, param1);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@, object: %@", cname, selector, self, param1);
     } else if ( strcmp( selector, "objectAtIndex:" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, index: %lu", self, selector, (NSUInteger)param1);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@, index: %lu", cname, selector, self, (NSUInteger)param1);
     } else if ( strcmp( selector, "count" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, self: %@", self, selector, self);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@", cname, selector, self);
     } else if ( strcmp( selector, "allKeys" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, self: %@", self, selector, self);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@", cname, selector, self);
     } else if ( strcmp( selector, "allValues" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, self: %@", self, selector, self);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@", cname, selector, self);
     } else if ( strcmp( selector, "removeObjectForKey:" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, key: %@", self, selector, param1);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@, key: %@", cname, selector, self, param1);
     } else if ( strcmp( selector, "removeAllObjects" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s", self, selector);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@", cname, selector, self);
     } else if ( strcmp( selector, "length" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, self: %@", self, selector, self);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@", cname, selector, self);
     } else if ( strcmp( selector, "characterAtIndex:" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, index: %lu", self, selector, (NSUInteger)param1);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@, index: %lu", cname, selector, self, (NSUInteger)param1);
     } else if ( strcmp( selector, "init" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s", self, selector);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@", cname, selector, self);
     } else if ( strcmp( selector, "alloc" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s", self, selector);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@", cname, selector, self);
     } else if ( strcmp( selector, "new" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s", self, selector);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@", cname, selector, self);
     } else if ( strcmp( selector, "copy" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, self: %@", self, selector, self);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@", cname, selector, self);
     } else if ( strcmp( selector, "mutableCopy" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, self: %@", self, selector, self);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@", cname, selector, self);
     } else if ( strcmp( selector, "description" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, self: %@", self, selector, self);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@", cname, selector, self);
     } else if ( strcmp( selector, "debugDescription" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, self: %@", self, selector, self);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@", cname, selector, self);
     } else if ( strcmp( selector, "isEqual:" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, self: %@, other: %@", self, selector, self, param1);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@, other: %@", cname, selector, self, param1);
     } else if ( strcmp( selector, "hash" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, self: %@", self, selector, self);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@", cname, selector, self);
     } else if ( strcmp( selector, "isKindOfClass:" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, class: %@", self, selector, param1);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@, class: %@", cname, selector, self, param1);
     } else if ( strcmp( selector, "isMemberOfClass:" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, class: %@", self, selector, param1);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@, class: %@", cname, selector, self, param1);
     } else if ( strcmp( selector, "respondsToSelector:" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, selector: %s", self, selector, sel_getName((SEL)param1));
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@, selector: %s", cname, selector, self, sel_getName((SEL)param1));
     } else if ( strcmp( selector, "performSelector:" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, selector: %s", self, selector, sel_getName((SEL)param1));
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@, selector: %s", cname, selector, self, sel_getName((SEL)param1));
     } else if ( strcmp( selector, "performSelector:withObject:" ) == 0) {
-        NSLog(@"[HOOK] class: %@, method: %s, selector: %s, object: %@", self, selector, sel_getName((SEL)param1), param2);
+        NSLog(@"[HOOK] class: %s, method: %s, self: %@, selector: %s, object: %@", cname, selector, self, sel_getName((SEL)param1), param2);
     } else {
-        const char * className = object_getClassName(self);
-        NSLog(@"[HOOK] class: %s, method: %s", className, selector);
+        NSLog(@"[HOOK] class: %s, method: %s", cname, selector);
     }
 }
 

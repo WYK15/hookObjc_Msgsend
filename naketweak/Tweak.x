@@ -2,6 +2,8 @@
 #import "hookobjcMsgsend.h"
 #import "hookcommon.h"
 #import <rootless.h>
+#import "hookCrypt.h"
+#import "stdstringhook.h"
 
 
 // 定义偏好设置的键
@@ -34,14 +36,61 @@ static BOOL enableOpendirHook = NO;
 static BOOL enableReadHook = NO;
 static BOOL enableDyldImageCountHook = NO;
 static BOOL enableDyldGetImageVmaddrSlideHook = NO;
+static BOOL enableDyldGetImageNameHook = NO;
 
 // 其他类别的 Hook 开关
 static BOOL enableCryptoFunctionsHook = NO;  // 加密函数
 static BOOL enableHostInfoFunctionsHook = NO;  // 主机信息函数
+static BOOL enableHostStatisticsHook = YES;  // host_statistics 函数
 static BOOL enableCFStringFunctionsHook = NO;  // CoreFoundation 字符串函数
 static BOOL enableCFURLFunctionsHook = NO;  // CoreFoundation URL 函数
 static BOOL enableTimeFunctionsHook = NO;  // 时间函数
 static BOOL enableKeychainFunctionsHook = NO;  // Keychain 函数
+
+// hookCrypt 开关
+static BOOL enableCCCryptHook = NO;
+static BOOL enableCCCryptorCreateWithModeHook = NO;
+static BOOL enableCCCryptorCreateHook = NO;
+static BOOL enableCCCryptorUpdateHook = NO;
+static BOOL enableCCCryptorFinalHook = NO;
+
+// stdstringhook 开关
+static BOOL enableStdstringAppendLenHook = NO;
+static BOOL enableStdstringAppendHook = NO;
+static BOOL enableStdstringAssignHook = NO;
+
+// 新增系统函数开关
+static BOOL enableGettimeofdayHook = NO;
+static BOOL enableGetpagesizeHook = NO;
+static BOOL enableCNCopyCurrentNetworkInfoHook = NO;
+static BOOL enableCNCopySupportedInterfacesHook = NO;
+static BOOL enableCCSHA1UpdateHook = NO;
+
+// 新增 Hook 开关
+static BOOL enableDladdrHook = YES;
+static BOOL enableFaccessatHook = YES;
+static BOOL enableGetpidHook = YES;
+static BOOL enableGetppidHook = YES;
+static BOOL enableGetsectiondataHook = YES;
+static BOOL enableIoctlHook = YES;
+static BOOL enableSnprintfHook = YES;
+static BOOL enableRandHook = YES;
+static BOOL enableReaddirHook = YES;
+static BOOL enableRmdirHook = YES;
+static BOOL enableMkdirHook = YES;
+static BOOL enableSocketHook = YES;
+static BOOL enableSrandHook = YES;
+static BOOL enableStrcmpHook = YES;
+static BOOL enableStrnstrHook = YES;
+static BOOL enableSysconfHook = YES;
+static BOOL enableTimeHook = YES;
+static BOOL enableStrcasestrHook = YES;
+static BOOL enableSprintfHook = YES;
+static BOOL enableFstatHook = YES;
+static BOOL enableFstatatHook = YES;
+static BOOL enableFreadHook = YES;
+static BOOL enableOpenatHook = YES;
+static BOOL enablePopenHook = YES;
 
 // 从plist文件加载配置（统一使用一个文件）
 static NSDictionary* loadPreferences() {
@@ -77,14 +126,61 @@ static void loadHookSettings() {
         enableReadHook = [prefs[@"enableRead"] boolValue];
         enableDyldImageCountHook = [prefs[@"enableDyldImageCount"] boolValue];
         enableDyldGetImageVmaddrSlideHook = [prefs[@"enableDyldGetImageVmaddrSlide"] boolValue];
+        enableDyldGetImageNameHook = [prefs[@"enableDyldGetImageName"] boolValue];
         
         // 其他类别的 Hook 开关配置读取
         enableCryptoFunctionsHook = [prefs[@"enableCryptoFunctions"] boolValue];
         enableHostInfoFunctionsHook = [prefs[@"enableHostInfoFunctions"] boolValue];
+        enableHostStatisticsHook = [prefs[@"enableHostStatistics"] boolValue];
         enableCFStringFunctionsHook = [prefs[@"enableCFStringFunctions"] boolValue];
         enableCFURLFunctionsHook = [prefs[@"enableCFURLFunctions"] boolValue];
         enableTimeFunctionsHook = [prefs[@"enableTimeFunctions"] boolValue];
         enableKeychainFunctionsHook = [prefs[@"enableKeychainFunctions"] boolValue];
+        
+        // hookCrypt 配置读取
+        enableCCCryptHook = [prefs[@"enableCCCrypt"] boolValue];
+        enableCCCryptorCreateWithModeHook = [prefs[@"enableCCCryptorCreateWithMode"] boolValue];
+        enableCCCryptorCreateHook = [prefs[@"enableCCCryptorCreate"] boolValue];
+        enableCCCryptorUpdateHook = [prefs[@"enableCCCryptorUpdate"] boolValue];
+        enableCCCryptorFinalHook = [prefs[@"enableCCCryptorFinal"] boolValue];
+        
+        // stdstringhook 配置读取
+        enableStdstringAppendLenHook = [prefs[@"enableStdstringAppendLen"] boolValue];
+        enableStdstringAppendHook = [prefs[@"enableStdstringAppend"] boolValue];
+        enableStdstringAssignHook = [prefs[@"enableStdstringAssign"] boolValue];
+        
+        // 新增系统函数配置读取
+        enableGettimeofdayHook = [prefs[@"enableGettimeofday"] boolValue];
+        enableGetpagesizeHook = [prefs[@"enableGetpagesize"] boolValue];
+        enableCNCopyCurrentNetworkInfoHook = [prefs[@"enableCNCopyCurrentNetworkInfo"] boolValue];
+        enableCNCopySupportedInterfacesHook = [prefs[@"enableCNCopySupportedInterfaces"] boolValue];
+        enableCCSHA1UpdateHook = [prefs[@"enableCCSHA1Update"] boolValue];
+        
+        // 新增 Hook 配置读取
+        enableDladdrHook = [prefs[@"enableDladdr"] boolValue];
+        enableFaccessatHook = [prefs[@"enableFaccessat"] boolValue];
+        enableGetpidHook = [prefs[@"enableGetpid"] boolValue];
+        enableGetppidHook = [prefs[@"enableGetppid"] boolValue];
+        enableGetsectiondataHook = [prefs[@"enableGetsectiondata"] boolValue];
+        enableIoctlHook = [prefs[@"enableIoctl"] boolValue];
+        enableSnprintfHook = [prefs[@"enableSnprintf"] boolValue];
+        enableRandHook = [prefs[@"enableRand"] boolValue];
+        enableReaddirHook = [prefs[@"enableReaddir"] boolValue];
+        enableRmdirHook = [prefs[@"enableRmdir"] boolValue];
+        enableMkdirHook = [prefs[@"enableMkdir"] boolValue];
+        enableSocketHook = [prefs[@"enableSocket"] boolValue];
+        enableSrandHook = [prefs[@"enableSrand"] boolValue];
+        enableStrcmpHook = [prefs[@"enableStrcmp"] boolValue];
+        enableStrnstrHook = [prefs[@"enableStrnstr"] boolValue];
+        enableSysconfHook = [prefs[@"enableSysconf"] boolValue];
+        enableTimeHook = [prefs[@"enableTime"] boolValue];
+        enableStrcasestrHook = [prefs[@"enableStrcasestr"] boolValue];
+        enableSprintfHook = [prefs[@"enableSprintf"] boolValue];
+        enableFstatHook = [prefs[@"enableFstat"] boolValue];
+        enableFstatatHook = [prefs[@"enableFstatat"] boolValue];
+        enableFreadHook = [prefs[@"enableFread"] boolValue];
+        enableOpenatHook = [prefs[@"enableOpenat"] boolValue];
+        enablePopenHook = [prefs[@"enablePopen"] boolValue];
     }
 }
 
@@ -92,7 +188,9 @@ static void loadHookSettings() {
 static BOOL isGlobalMonitoringEnabled() {
     NSDictionary *prefs = loadPreferences();
     NSNumber *globalSwitch = prefs[@"global_monitoring"];
-    return globalSwitch ? [globalSwitch boolValue] : YES;  // 默认开启
+    //NSLog(@"[nake] Global monitoring check - prefs: %@", prefs, globalSwitch);
+    NSLog(@"[nake] Global monitoring check - globalSwitch: %@", globalSwitch);
+    return [globalSwitch boolValue];  // 默认开启
 }
 
 // 检查应用是否被启用
@@ -251,6 +349,11 @@ static void prefsChanged(CFNotificationCenterRef center, void *observer, CFStrin
         hook___dyld_get_image_vmaddr_slide();
     }
     
+    if (enableDyldGetImageNameHook) {
+        NSLog(@"[nake] Enabling __dyld_get_image_name hook");
+        hook___dyld_get_image_name();
+    }
+    
     // 其他类别的 Hook 初始化
     if (enableCryptoFunctionsHook) {
         NSLog(@"[nake] Enabling crypto functions hook");
@@ -261,6 +364,11 @@ static void prefsChanged(CFNotificationCenterRef center, void *observer, CFStrin
         NSLog(@"[nake] Enabling host info functions hook");
         hook_host_info();
         hook_host_statistics64();
+    }
+    
+    if (enableHostStatisticsHook) {
+        NSLog(@"[nake] Enabling host statistics hook");
+        hook_host_statistics();
     }
     
     if (enableCFStringFunctionsHook) {
@@ -288,6 +396,194 @@ static void prefsChanged(CFNotificationCenterRef center, void *observer, CFStrin
         hook_SecItemUpdate();
         hook_SecItemDelete();
         hook_SecItemCopyMatching();
+    }
+    
+    // hookCrypt Hook 初始化
+    if (enableCCCryptHook) {
+        NSLog(@"[nake] Enabling CCCrypt hook");
+        hook_CCCrypt();
+    }
+    
+    if (enableCCCryptorCreateWithModeHook) {
+        NSLog(@"[nake] Enabling CCCryptorCreateWithMode hook");
+        hook_CCCryptorCreateWithMode();
+    }
+    
+    if (enableCCCryptorCreateHook) {
+        NSLog(@"[nake] Enabling CCCryptorCreate hook");
+        hook_CCCryptorCreate();
+    }
+    
+    if (enableCCCryptorUpdateHook) {
+        NSLog(@"[nake] Enabling CCCryptorUpdate hook");
+        hook_CCCryptorUpdate();
+    }
+    
+    if (enableCCCryptorFinalHook) {
+        NSLog(@"[nake] Enabling CCCryptorFinal hook");
+        hook_CCCryptorFinal();
+    }
+    
+    // stdstringhook Hook 初始化
+    if (enableStdstringAppendLenHook) {
+        NSLog(@"[nake] Enabling std::string::append(len) hook");
+        hook_stdstring_appendLen();
+    }
+    
+    if (enableStdstringAppendHook) {
+        NSLog(@"[nake] Enabling std::string::append(str) hook");
+        hook_stdstring_append();
+    }
+    
+    if (enableStdstringAssignHook) {
+        NSLog(@"[nake] Enabling std::string::assign hook");
+        hook_stdstring_assign();
+    }
+    
+    if (enableGettimeofdayHook) {
+        NSLog(@"[nake] Enabling gettimeofday hook");
+        hook_gettimeofday();
+    }
+    
+    if (enableGetpagesizeHook) {
+        NSLog(@"[nake] Enabling getpagesize hook");
+        hook_getpagesize();
+    }
+    
+    if (enableCNCopyCurrentNetworkInfoHook) {
+        NSLog(@"[nake] Enabling CNCopyCurrentNetworkInfo hook");
+        hook_CNCopyCurrentNetworkInfo();
+    }
+    
+    if (enableCNCopySupportedInterfacesHook) {
+        NSLog(@"[nake] Enabling CNCopySupportedInterfaces hook");
+        hook_CNCopySupportedInterfaces();
+    }
+    
+    if (enableCCSHA1UpdateHook) {
+        NSLog(@"[nake] Enabling CC_SHA1_Update hook");
+        hook_CC_SHA1_Update();
+    }
+    
+    // 新增 Hook 调用
+    if (enableDladdrHook) {
+        NSLog(@"[nake] Enabling dladdr hook");
+        hook_dladdr();
+    }
+    
+    if (enableFaccessatHook) {
+        NSLog(@"[nake] Enabling faccessat hook");
+        hook_faccessat();
+    }
+    
+    if (enableGetpidHook) {
+        NSLog(@"[nake] Enabling getpid hook");
+        hook_getpid();
+    }
+    
+    if (enableGetppidHook) {
+        NSLog(@"[nake] Enabling getppid hook");
+        hook_getppid();
+    }
+    
+    if (enableGetsectiondataHook) {
+        NSLog(@"[nake] Enabling getsectiondata hook");
+        hook_getsectiondata();
+    }
+    
+    if (enableIoctlHook) {
+        NSLog(@"[nake] Enabling ioctl hook");
+        hook_ioctl();
+    }
+    
+    if (enableSnprintfHook) {
+        NSLog(@"[nake] Enabling snprintf hook");
+        hook_snprintf();
+    }
+    
+    if (enableRandHook) {
+        NSLog(@"[nake] Enabling rand hook");
+        hook_rand();
+    }
+    
+    if (enableReaddirHook) {
+        NSLog(@"[nake] Enabling readdir hook");
+        hook_readdir();
+    }
+    
+    if (enableRmdirHook) {
+        NSLog(@"[nake] Enabling rmdir hook");
+        hook_rmdir();
+    }
+    
+    if (enableMkdirHook) {
+        NSLog(@"[nake] Enabling mkdir hook");
+        hook_mkdir();
+    }
+    
+    if (enableSocketHook) {
+        NSLog(@"[nake] Enabling socket hook");
+        hook_socket();
+    }
+    
+    if (enableSrandHook) {
+        NSLog(@"[nake] Enabling srand hook");
+        hook_srand();
+    }
+    
+    if (enableStrcmpHook) {
+        NSLog(@"[nake] Enabling strcmp hook");
+        hook_strcmp();
+    }
+    
+    if (enableStrnstrHook) {
+        NSLog(@"[nake] Enabling strnstr hook");
+        hook_strnstr();
+    }
+    
+    if (enableSysconfHook) {
+        NSLog(@"[nake] Enabling sysconf hook");
+        hook_sysconf();
+    }
+    
+    if (enableTimeHook) {
+        NSLog(@"[nake] Enabling time hook");
+        hook_time();
+    }
+    
+    if (enableStrcasestrHook) {
+        NSLog(@"[nake] Enabling strcasestr hook");
+        hook_strcasestr();
+    }
+    
+    if (enableSprintfHook) {
+        NSLog(@"[nake] Enabling sprintf hook");
+        hook_sprintf();
+    }
+    
+    if (enableFstatHook) {
+        NSLog(@"[nake] Enabling fstat hook");
+        hook_fstat();
+    }
+    
+    if (enableFstatatHook) {
+        NSLog(@"[nake] Enabling fstatat hook");
+        hook_fstatat();
+    }
+    
+    if (enableFreadHook) {
+        NSLog(@"[nake] Enabling fread hook");
+        hook_fread();
+    }
+    
+    if (enableOpenatHook) {
+        NSLog(@"[nake] Enabling openat hook");
+        hook_openat();
+    }
+    
+    if (enablePopenHook) {
+        NSLog(@"[nake] Enabling popen hook");
+        hook_popen();
     }
     
     NSLog(@"[nake] Tweak initialization completed for %@", bundleId);
