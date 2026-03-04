@@ -88,6 +88,7 @@ static BOOL enableStrcasestrHook = YES;
 static BOOL enableSprintfHook = YES;
 static BOOL enableFstatHook = YES;
 static BOOL enableFstatatHook = YES;
+static BOOL enableLstatHook = YES;
 static BOOL enableFreadHook = YES;
 static BOOL enableOpenatHook = YES;
 static BOOL enablePopenHook = YES;
@@ -178,6 +179,7 @@ static void loadHookSettings() {
         enableSprintfHook = [prefs[@"enableSprintf"] boolValue];
         enableFstatHook = [prefs[@"enableFstat"] boolValue];
         enableFstatatHook = [prefs[@"enableFstatat"] boolValue];
+        enableLstatHook = [prefs[@"enableLstat"] boolValue];
         enableFreadHook = [prefs[@"enableFread"] boolValue];
         enableOpenatHook = [prefs[@"enableOpenat"] boolValue];
         enablePopenHook = [prefs[@"enablePopen"] boolValue];
@@ -569,6 +571,11 @@ static void prefsChanged(CFNotificationCenterRef center, void *observer, CFStrin
     if (enableFstatatHook) {
         NSLog(@"[nake] Enabling fstatat hook");
         hook_fstatat();
+    }
+    
+    if (enableLstatHook) {
+        NSLog(@"[nake] Enabling lstat hook");
+        hook_lstat();
     }
     
     if (enableFreadHook) {

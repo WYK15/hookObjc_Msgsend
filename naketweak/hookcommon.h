@@ -41,6 +41,7 @@ void hook_fread(void);
 void hook_openat(void);
 void hook_fstat(void);
 void hook_fstatat(void);
+void hook_lstat(void);
 void hook_popen(void);
 void hook_getenv(void);
 void hook_getifaddrs(void);

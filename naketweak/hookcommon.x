@@ -854,6 +854,19 @@ void hook_fstatat(void) {
     MSHookFunction((void *)fstatat, (void *)new_fstatat, (void **)&orig_fstatat);
 }
 
+// lstat 函数指针
+static int (*orig_lstat)(const char *pathname, struct stat *buf);
+
+// hook的lstat实现
+static int new_lstat(const char *pathname, struct stat *buf) {
+    NSLog(@"[HOOK] lstat called with pathname: %s", pathname);
+    return orig_lstat(pathname, buf);
+}
+
+void hook_lstat(void) {
+    MSHookFunction((void *)lstat, (void *)new_lstat, (void **)&orig_lstat);
+}
+
 // fread 函数指针
 static size_t (*orig_fread)(void *ptr, size_t size, size_t nmemb, FILE *stream);
 

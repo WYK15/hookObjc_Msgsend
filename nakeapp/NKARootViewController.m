@@ -77,6 +77,7 @@ static NSString *const kEnableStrcasestrHook = @"enableStrcasestr";
 static NSString *const kEnableSprintfHook = @"enableSprintf";
 static NSString *const kEnableFstatHook = @"enableFstat";
 static NSString *const kEnableFstatatHook = @"enableFstatat";
+static NSString *const kEnableLstatHook = @"enableLstat";
 static NSString *const kEnableFreadHook = @"enableFread";
 static NSString *const kEnableOpenatHook = @"enableOpenat";
 static NSString *const kEnablePopenHook = @"enablePopen";
@@ -127,7 +128,7 @@ static NSString *const kEnableStdstringAssignHook = @"enableStdstringAssign";
 - (NSInteger)tableView:(UITableView *)tableView
     numberOfRowsInSection:(NSInteger)section {
   if (section == 0) {
-    return 65; // 7个原有 Hook 开关 + 14个系统函数独立开关 + 7个其他类别 Hook 开关 + 8个新Hook开关 + 5个新增Hook开关 + 24个新增Hook开关
+    return 66; // 7个原有 Hook 开关 + 14个系统函数独立开关 + 7个其他类别 Hook 开关 + 8个新Hook开关 + 5个新增Hook开关 + 24个新增Hook开关 + 1个lstat开关
   } else {
     return 2; // 全局开关 + 查看应用列表按钮
   }
@@ -481,16 +482,21 @@ static NSString *const kEnableStdstringAssignHook = @"enableStdstringAssign";
       tag = 161;
       break;
     case 62:
+      title = @"启用 lstat Hook";
+      key = kEnableLstatHook;
+      tag = 165;
+      break;
+    case 63:
       title = @"启用 fread Hook";
       key = kEnableFreadHook;
       tag = 162;
       break;
-    case 63:
+    case 64:
       title = @"启用 openat Hook";
       key = kEnableOpenatHook;
       tag = 163;
       break;
-    case 64:
+    case 65:
       title = @"启用 popen Hook";
       key = kEnablePopenHook;
       tag = 164;
@@ -1001,6 +1007,9 @@ static NSString *const kEnableStdstringAssignHook = @"enableStdstringAssign";
       break;
     case 164:
       key = kEnablePopenHook;
+      break;
+    case 165:
+      key = kEnableLstatHook;
       break;
   default:
     return;

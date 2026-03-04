@@ -1,6 +1,9 @@
 TARGET := iphone:16.5:14.0
 #export ARCHS = arm64
 
+# THEOS_DEVICE_IP=172.16.20.12
+# THEOS_DEVICE_PORT=22
+
 include $(THEOS)/makefiles/common.mk
 
 SUBPROJECTS += naketweak
