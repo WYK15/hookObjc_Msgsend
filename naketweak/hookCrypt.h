@@ -31,4 +31,12 @@ void hook_CCCryptorUpdate(void);
 //CCCryptorStatus CCCryptorFinal(CCCryptorRef cryptorRef, void *dataOut,size_t dataOutAvailable, size_t *dataOutMoved);
 void hook_CCCryptorFinal(void);
 
+// CCHmac 函数
+void hook_CCHmac(void);
+void hook_CCHmacUpdate(void);
+
+// CC_MD5 函数
+void hook_CC_MD5(void);
+void hook_CC_MD5_Update(void);
+
 #endif /* HOOKCRYPT_H */

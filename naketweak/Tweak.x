@@ -3,7 +3,11 @@
 #import "hookcommon.h"
 #import <rootless.h>
 #import "hookCrypt.h"
+#import "hookNet.h"
 #import "stdstringhook.h"
+#import <os/log.h>
+
+static os_log_t nake_log = OS_LOG_DEFAULT;
 
 
 // 定义偏好设置的键
@@ -92,6 +96,31 @@ static BOOL enableLstatHook = YES;
 static BOOL enableFreadHook = YES;
 static BOOL enableOpenatHook = YES;
 static BOOL enablePopenHook = YES;
+
+// hookCrypt 变量
+static BOOL enableCCHmacHook = YES;
+static BOOL enableCCHmacUpdateHook = YES;
+static BOOL enableCCMD5Hook = YES;
+static BOOL enableCCMD5UpdateHook = YES;
+
+// hookNet 变量
+static BOOL enableSSLCreateContextHook = YES;
+static BOOL enableSSLSetConnectionHook = YES;
+static BOOL enableSSLWriteHook = YES;
+static BOOL enableSSLReadHook = YES;
+static BOOL enableInetPtonHook = YES;
+
+// hookcommon 扩展变量
+static BOOL enableCFStringAppendHook = YES;
+static BOOL enableCFStringGetLengthHook = YES;
+static BOOL enableCFStringGetCStringHook = YES;
+static BOOL enableCFArrayGetCountHook = YES;
+static BOOL enableCFArrayGetValueAtIndexHook = YES;
+static BOOL enableCFDataCreateHook = YES;
+static BOOL enableCFDictionaryCreateCopyHook = YES;
+static BOOL enableCFDictionarySetValueHook = YES;
+static BOOL enableCFDictionaryGetValueHook = YES;
+static BOOL enableCFUUIDCreateHook = YES;
 
 // 从plist文件加载配置（统一使用一个文件）
 static NSDictionary* loadPreferences() {
@@ -183,6 +212,31 @@ static void loadHookSettings() {
         enableFreadHook = [prefs[@"enableFread"] boolValue];
         enableOpenatHook = [prefs[@"enableOpenat"] boolValue];
         enablePopenHook = [prefs[@"enablePopen"] boolValue];
+        
+        // hookCrypt 配置读取
+        enableCCHmacHook = [prefs[@"enableCCHmac"] boolValue];
+        enableCCHmacUpdateHook = [prefs[@"enableCCHmacUpdate"] boolValue];
+        enableCCMD5Hook = [prefs[@"enableCCMD5"] boolValue];
+        enableCCMD5UpdateHook = [prefs[@"enableCCMD5Update"] boolValue];
+        
+        // hookNet 配置读取
+        enableSSLCreateContextHook = [prefs[@"enableSSLCreateContext"] boolValue];
+        enableSSLSetConnectionHook = [prefs[@"enableSSLSetConnection"] boolValue];
+        enableSSLWriteHook = [prefs[@"enableSSLWrite"] boolValue];
+        enableSSLReadHook = [prefs[@"enableSSLRead"] boolValue];
+        enableInetPtonHook = [prefs[@"enableInetPton"] boolValue];
+        
+        // hookcommon 扩展配置读取
+        enableCFStringAppendHook = [prefs[@"enableCFStringAppend"] boolValue];
+        enableCFStringGetLengthHook = [prefs[@"enableCFStringGetLength"] boolValue];
+        enableCFStringGetCStringHook = [prefs[@"enableCFStringGetCString"] boolValue];
+        enableCFArrayGetCountHook = [prefs[@"enableCFArrayGetCount"] boolValue];
+        enableCFArrayGetValueAtIndexHook = [prefs[@"enableCFArrayGetValueAtIndex"] boolValue];
+        enableCFDataCreateHook = [prefs[@"enableCFDataCreate"] boolValue];
+        enableCFDictionaryCreateCopyHook = [prefs[@"enableCFDictionaryCreateCopy"] boolValue];
+        enableCFDictionarySetValueHook = [prefs[@"enableCFDictionarySetValue"] boolValue];
+        enableCFDictionaryGetValueHook = [prefs[@"enableCFDictionaryGetValue"] boolValue];
+        enableCFUUIDCreateHook = [prefs[@"enableCFUUIDCreate"] boolValue];
     }
 }
 
@@ -190,9 +244,8 @@ static void loadHookSettings() {
 static BOOL isGlobalMonitoringEnabled() {
     NSDictionary *prefs = loadPreferences();
     NSNumber *globalSwitch = prefs[@"global_monitoring"];
-    //NSLog(@"[nake] Global monitoring check - prefs: %@", prefs, globalSwitch);
-    NSLog(@"[nake] Global monitoring check - globalSwitch: %@", globalSwitch);
-    return [globalSwitch boolValue];  // 默认开启
+    os_log(nake_log, "[nake] Global monitoring check - globalSwitch: %{public}@", globalSwitch);
+    return [globalSwitch boolValue];
 }
 
 // 检查应用是否被启用
@@ -202,7 +255,7 @@ static BOOL isAppEnabled(NSString *bundleId) {
         
         // 首先检查全局开关
         if (!isGlobalMonitoringEnabled()) {
-            NSLog(@"[nake] Global monitoring is disabled");
+            os_log(nake_log, "[nake] Global monitoring is disabled");
             return NO;
         }
         
@@ -212,169 +265,166 @@ static BOOL isAppEnabled(NSString *bundleId) {
         NSString *key = [NSString stringWithFormat:@"app_switch_%@", bundleId];
         NSNumber *appSwitch = prefs[key];
         
-        // 如果没有设置过，默认不启用（安全考虑）
-        BOOL isEnabled = appSwitch ? [appSwitch boolValue] : NO;
-        NSLog(@"[nake] App %@ switch state: %@", bundleId, isEnabled ? @"ENABLED" : @"DISABLED");
-        
+        BOOL isEnabled = [appSwitch boolValue];
+        os_log(nake_log, "[nake] App %{public}@ switch state: %{public}@", bundleId, isEnabled ? @"ENABLED" : @"DISABLED");
         return isEnabled;
         
     } @catch (NSException *exception) {
-        NSLog(@"[nake] Error checking app enabled status for %@: %@", bundleId, exception);
-        return NO;  // 出错时默认不启用
+        os_log(nake_log, "[nake] Error checking app enabled status for %{public}@: %{public}@", bundleId, exception);
+        return NO;
     }
 }
 
-// 设置变更通知回调
 static void prefsChanged(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo) {
-    NSLog(@"[nake] Preferences changed, reloading settings...");
+    os_log(nake_log, "[nake] Preferences changed, reloading settings...");
     loadHookSettings();
     NSString *bundleId = [[NSBundle mainBundle] bundleIdentifier];
-    NSLog(@"[nake] Reloaded preferences for %@ - ObjcMsgSend: %d, Access: %d, Dlopen: %d", 
+    os_log(nake_log, "[nake] Reloaded preferences for %{public}@ - ObjcMsgSend: %d, Access: %d, Dlopen: %d", 
           bundleId, enableObjcMsgSendHook, enableAccessHook, enableDlopenHook);
 }
 
 %ctor {    
     NSString *bundleId = [[NSBundle mainBundle] bundleIdentifier];
-    NSLog(@"[nake] Initializing tweak for app: %@", bundleId);
+    os_log(nake_log, "[nake] Initializing tweak for app: %{public}@", bundleId);
     
     if (!isAppEnabled(bundleId)) {
-        NSLog(@"[nake] App %@ is disabled, skipping hook initialization", bundleId);
+        os_log(nake_log, "[nake] App %{public}@ is disabled, skipping hook initialization", bundleId);
         return;
     }
 
     // 加载初始设置
     loadHookSettings();
 
-    NSLog(@"[nake] Hook preferences - ObjcMsgSend: %d, Access: %d, Dlopen: %d", 
+    os_log(nake_log, "[nake] Hook preferences - ObjcMsgSend: %d, Access: %d, Dlopen: %d", 
           enableObjcMsgSendHook, enableAccessHook, enableDlopenHook);
     
     // 根据设置启用相应的hook
     if (enableObjcMsgSendHook) {
-        NSLog(@"[nake] Enabling objc_msgSend hook");
+        os_log(nake_log, "[nake] Enabling objc_msgSend hook");
         doHookObjcMsgsend();
     }
     
     if (enableAccessHook) {
-        NSLog(@"[nake] Enabling access hook");
+        os_log(nake_log, "[nake] Enabling access hook");
         hook_access();
     }
     
     if (enableDlopenHook) {
-        NSLog(@"[nake] Enabling dlopen and dlsym hooks");
+        os_log(nake_log, "[nake] Enabling dlopen and dlsym hooks");
         hook_dlopen();
         hook_dlsym();
     }
     
     if (enableRes9InitHook) {
-        NSLog(@"[nake] Enabling res9 init hook");
+        os_log(nake_log, "[nake] Enabling res9 init hook");
         hook_res_9_init();
     }
     
     if (enableClassGetClassMethodHook) {
-        NSLog(@"[nake] Enabling class_getClassMethod hook");
+        os_log(nake_log, "[nake] Enabling class_getClassMethod hook");
         hook_class_getClassMethod();
     }
     
     if (enableSelRegisterNameHook) {
-        NSLog(@"[nake] Enabling sel_registerName hook");
+        os_log(nake_log, "[nake] Enabling sel_registerName hook");
         hook_sel_registerName();
     }
     
     if (enableCFNetworkCopySystemProxySettingsHook) {
-        NSLog(@"[nake] Enabling CFNetworkCopySystemProxySettings hook");
+        os_log(nake_log, "[nake] Enabling CFNetworkCopySystemProxySettings hook");
         hook_CFNetworkCopySystemProxySettings();
     }
     
     // 系统函数独立 Hook 初始化
     if (enableFopenHook) {
-        NSLog(@"[nake] Enabling fopen hook");
+        os_log(nake_log, "[nake] Enabling fopen hook");
         hook_fopen();
     }
     
     if (enableGetenvHook) {
-        NSLog(@"[nake] Enabling getenv hook");
+        os_log(nake_log, "[nake] Enabling getenv hook");
         hook_getenv();
     }
     
     if (enableGetifaddrsHook) {
-        NSLog(@"[nake] Enabling getifaddrs hook");
+        os_log(nake_log, "[nake] Enabling getifaddrs hook");
         hook_getifaddrs();
     }
     
     if (enableStatHook) {
-        NSLog(@"[nake] Enabling stat hook");
+        os_log(nake_log, "[nake] Enabling stat hook");
         hook_stat();
     }
     
     if (enableStatfsHook) {
-        NSLog(@"[nake] Enabling statfs hook");
+        os_log(nake_log, "[nake] Enabling statfs hook");
         hook_statfs();
     }
     
     if (enableSysctlHook) {
-        NSLog(@"[nake] Enabling sysctl hook");
+        os_log(nake_log, "[nake] Enabling sysctl hook");
         hook_sysctl();
     }
     
     if (enableSysctlbynameHook) {
-        NSLog(@"[nake] Enabling sysctlbyname hook");
+        os_log(nake_log, "[nake] Enabling sysctlbyname hook");
         hook_sysctlbyname();
     }
     
     if (enableUnameHook) {
-        NSLog(@"[nake] Enabling uname hook");
+        os_log(nake_log, "[nake] Enabling uname hook");
         hook_uname();
     }
     
     if (enableIsattyHook) {
-        NSLog(@"[nake] Enabling isatty hook");
+        os_log(nake_log, "[nake] Enabling isatty hook");
         hook_isatty();
     }
     
     if (enableOpendirHook) {
-        NSLog(@"[nake] Enabling opendir hook");
+        os_log(nake_log, "[nake] Enabling opendir hook");
         hook_opendir();
     }
     
     if (enableReadHook) {
-        NSLog(@"[nake] Enabling read hook");
+        os_log(nake_log, "[nake] Enabling read hook");
         hook_read();
     }
     
     if (enableDyldImageCountHook) {
-        NSLog(@"[nake] Enabling __dyld_image_count hook");
+        os_log(nake_log, "[nake] Enabling __dyld_image_count hook");
         hook___dyld_image_count();
     }
     
     if (enableDyldGetImageVmaddrSlideHook) {
-        NSLog(@"[nake] Enabling __dyld_get_image_vmaddr_slide hook");
+        os_log(nake_log, "[nake] Enabling __dyld_get_image_vmaddr_slide hook");
         hook___dyld_get_image_vmaddr_slide();
     }
     
     if (enableDyldGetImageNameHook) {
-        NSLog(@"[nake] Enabling __dyld_get_image_name hook");
+        os_log(nake_log, "[nake] Enabling __dyld_get_image_name hook");
         hook___dyld_get_image_name();
     }
     
     // 其他类别的 Hook 初始化
     if (enableCryptoFunctionsHook) {
-        NSLog(@"[nake] Enabling crypto functions hook");
+        os_log(nake_log, "[nake] Enabling crypto functions hook");
         hook_CC_SHA256();
     }
     
     if (enableHostInfoFunctionsHook) {
-        NSLog(@"[nake] Enabling host info functions hook");
+        os_log(nake_log, "[nake] Enabling host info functions hook");
         hook_host_info();
         hook_host_statistics64();
     }
     
     if (enableHostStatisticsHook) {
-        NSLog(@"[nake] Enabling host statistics hook");
+        os_log(nake_log, "[nake] Enabling host statistics hook");
         hook_host_statistics();
     }
     
     if (enableCFStringFunctionsHook) {
-        NSLog(@"[nake] Enabling CFString functions hook");
+        os_log(nake_log, "[nake] Enabling CFString functions hook");
         hook_CFStringCreateCopy();
         hook_CFStringCreateWithCString();
         hook_CFStringCreateWithFileSystemRepresentation();
@@ -382,18 +432,18 @@ static void prefsChanged(CFNotificationCenterRef center, void *observer, CFStrin
     }
     
     if (enableCFURLFunctionsHook) {
-        NSLog(@"[nake] Enabling CFURL functions hook");
+        os_log(nake_log, "[nake] Enabling CFURL functions hook");
         hook_CFURLCreateWithFileSystemPath();
         hook_CFURLCreateWithString();
     }
     
     if (enableTimeFunctionsHook) {
-        NSLog(@"[nake] Enabling time functions hook");
+        os_log(nake_log, "[nake] Enabling time functions hook");
         hook_CACurrentMediaTime();
     }
     
     if (enableKeychainFunctionsHook) {
-        NSLog(@"[nake] Enabling keychain functions hook");
+        os_log(nake_log, "[nake] Enabling keychain functions hook");
         hook_SecItemAdd();
         hook_SecItemUpdate();
         hook_SecItemDelete();
@@ -402,196 +452,278 @@ static void prefsChanged(CFNotificationCenterRef center, void *observer, CFStrin
     
     // hookCrypt Hook 初始化
     if (enableCCCryptHook) {
-        NSLog(@"[nake] Enabling CCCrypt hook");
+        os_log(nake_log, "[nake] Enabling CCCrypt hook");
         hook_CCCrypt();
     }
     
     if (enableCCCryptorCreateWithModeHook) {
-        NSLog(@"[nake] Enabling CCCryptorCreateWithMode hook");
+        os_log(nake_log, "[nake] Enabling CCCryptorCreateWithMode hook");
         hook_CCCryptorCreateWithMode();
     }
     
     if (enableCCCryptorCreateHook) {
-        NSLog(@"[nake] Enabling CCCryptorCreate hook");
+        os_log(nake_log, "[nake] Enabling CCCryptorCreate hook");
         hook_CCCryptorCreate();
     }
     
     if (enableCCCryptorUpdateHook) {
-        NSLog(@"[nake] Enabling CCCryptorUpdate hook");
+        os_log(nake_log, "[nake] Enabling CCCryptorUpdate hook");
         hook_CCCryptorUpdate();
     }
     
     if (enableCCCryptorFinalHook) {
-        NSLog(@"[nake] Enabling CCCryptorFinal hook");
+        os_log(nake_log, "[nake] Enabling CCCryptorFinal hook");
         hook_CCCryptorFinal();
     }
     
     // stdstringhook Hook 初始化
     if (enableStdstringAppendLenHook) {
-        NSLog(@"[nake] Enabling std::string::append(len) hook");
+        os_log(nake_log, "[nake] Enabling std::string::append(len) hook");
         hook_stdstring_appendLen();
     }
     
     if (enableStdstringAppendHook) {
-        NSLog(@"[nake] Enabling std::string::append(str) hook");
+        os_log(nake_log, "[nake] Enabling std::string::append(str) hook");
         hook_stdstring_append();
     }
     
     if (enableStdstringAssignHook) {
-        NSLog(@"[nake] Enabling std::string::assign hook");
+        os_log(nake_log, "[nake] Enabling std::string::assign hook");
         hook_stdstring_assign();
     }
     
     if (enableGettimeofdayHook) {
-        NSLog(@"[nake] Enabling gettimeofday hook");
+        os_log(nake_log, "[nake] Enabling gettimeofday hook");
         hook_gettimeofday();
     }
     
     if (enableGetpagesizeHook) {
-        NSLog(@"[nake] Enabling getpagesize hook");
+        os_log(nake_log, "[nake] Enabling getpagesize hook");
         hook_getpagesize();
     }
     
     if (enableCNCopyCurrentNetworkInfoHook) {
-        NSLog(@"[nake] Enabling CNCopyCurrentNetworkInfo hook");
+        os_log(nake_log, "[nake] Enabling CNCopyCurrentNetworkInfo hook");
         hook_CNCopyCurrentNetworkInfo();
     }
     
     if (enableCNCopySupportedInterfacesHook) {
-        NSLog(@"[nake] Enabling CNCopySupportedInterfaces hook");
+        os_log(nake_log, "[nake] Enabling CNCopySupportedInterfaces hook");
         hook_CNCopySupportedInterfaces();
     }
     
     if (enableCCSHA1UpdateHook) {
-        NSLog(@"[nake] Enabling CC_SHA1_Update hook");
+        os_log(nake_log, "[nake] Enabling CC_SHA1_Update hook");
         hook_CC_SHA1_Update();
     }
     
     // 新增 Hook 调用
     if (enableDladdrHook) {
-        NSLog(@"[nake] Enabling dladdr hook");
+        os_log(nake_log, "[nake] Enabling dladdr hook");
         hook_dladdr();
     }
     
     if (enableFaccessatHook) {
-        NSLog(@"[nake] Enabling faccessat hook");
+        os_log(nake_log, "[nake] Enabling faccessat hook");
         hook_faccessat();
     }
     
     if (enableGetpidHook) {
-        NSLog(@"[nake] Enabling getpid hook");
+        os_log(nake_log, "[nake] Enabling getpid hook");
         hook_getpid();
     }
     
     if (enableGetppidHook) {
-        NSLog(@"[nake] Enabling getppid hook");
+        os_log(nake_log, "[nake] Enabling getppid hook");
         hook_getppid();
     }
     
     if (enableGetsectiondataHook) {
-        NSLog(@"[nake] Enabling getsectiondata hook");
+        os_log(nake_log, "[nake] Enabling getsectiondata hook");
         hook_getsectiondata();
     }
     
     if (enableIoctlHook) {
-        NSLog(@"[nake] Enabling ioctl hook");
+        os_log(nake_log, "[nake] Enabling ioctl hook");
         hook_ioctl();
     }
     
     if (enableSnprintfHook) {
-        NSLog(@"[nake] Enabling snprintf hook");
+        os_log(nake_log, "[nake] Enabling snprintf hook");
         hook_snprintf();
     }
     
     if (enableRandHook) {
-        NSLog(@"[nake] Enabling rand hook");
+        os_log(nake_log, "[nake] Enabling rand hook");
         hook_rand();
     }
     
     if (enableReaddirHook) {
-        NSLog(@"[nake] Enabling readdir hook");
+        os_log(nake_log, "[nake] Enabling readdir hook");
         hook_readdir();
     }
     
     if (enableRmdirHook) {
-        NSLog(@"[nake] Enabling rmdir hook");
+        os_log(nake_log, "[nake] Enabling rmdir hook");
         hook_rmdir();
     }
     
     if (enableMkdirHook) {
-        NSLog(@"[nake] Enabling mkdir hook");
+        os_log(nake_log, "[nake] Enabling mkdir hook");
         hook_mkdir();
     }
     
     if (enableSocketHook) {
-        NSLog(@"[nake] Enabling socket hook");
+        os_log(nake_log, "[nake] Enabling socket hook");
         hook_socket();
     }
     
     if (enableSrandHook) {
-        NSLog(@"[nake] Enabling srand hook");
+        os_log(nake_log, "[nake] Enabling srand hook");
         hook_srand();
     }
     
     if (enableStrcmpHook) {
-        NSLog(@"[nake] Enabling strcmp hook");
+        os_log(nake_log, "[nake] Enabling strcmp hook");
         hook_strcmp();
     }
     
     if (enableStrnstrHook) {
-        NSLog(@"[nake] Enabling strnstr hook");
+        os_log(nake_log, "[nake] Enabling strnstr hook");
         hook_strnstr();
     }
     
     if (enableSysconfHook) {
-        NSLog(@"[nake] Enabling sysconf hook");
+        os_log(nake_log, "[nake] Enabling sysconf hook");
         hook_sysconf();
     }
     
     if (enableTimeHook) {
-        NSLog(@"[nake] Enabling time hook");
+        os_log(nake_log, "[nake] Enabling time hook");
         hook_time();
     }
     
     if (enableStrcasestrHook) {
-        NSLog(@"[nake] Enabling strcasestr hook");
+        os_log(nake_log, "[nake] Enabling strcasestr hook");
         hook_strcasestr();
     }
     
     if (enableSprintfHook) {
-        NSLog(@"[nake] Enabling sprintf hook");
+        os_log(nake_log, "[nake] Enabling sprintf hook");
         hook_sprintf();
     }
     
     if (enableFstatHook) {
-        NSLog(@"[nake] Enabling fstat hook");
+        os_log(nake_log, "[nake] Enabling fstat hook");
         hook_fstat();
     }
     
     if (enableFstatatHook) {
-        NSLog(@"[nake] Enabling fstatat hook");
+        os_log(nake_log, "[nake] Enabling fstatat hook");
         hook_fstatat();
     }
     
     if (enableLstatHook) {
-        NSLog(@"[nake] Enabling lstat hook");
+        os_log(nake_log, "[nake] Enabling lstat hook");
         hook_lstat();
     }
     
     if (enableFreadHook) {
-        NSLog(@"[nake] Enabling fread hook");
+        os_log(nake_log, "[nake] Enabling fread hook");
         hook_fread();
     }
     
     if (enableOpenatHook) {
-        NSLog(@"[nake] Enabling openat hook");
+        os_log(nake_log, "[nake] Enabling openat hook");
         hook_openat();
     }
     
     if (enablePopenHook) {
-        NSLog(@"[nake] Enabling popen hook");
+        os_log(nake_log, "[nake] Enabling popen hook");
         hook_popen();
     }
     
-    NSLog(@"[nake] Tweak initialization completed for %@", bundleId);
+    // hookCrypt Hook 调用
+    if (enableCCHmacHook) {
+        os_log(nake_log, "[nake] Enabling CCHmac hook");
+        hook_CCHmac();
+    }
+    if (enableCCHmacUpdateHook) {
+        os_log(nake_log, "[nake] Enabling CCHmacUpdate hook");
+        hook_CCHmacUpdate();
+    }
+    if (enableCCMD5Hook) {
+        os_log(nake_log, "[nake] Enabling CC_MD5 hook");
+        hook_CC_MD5();
+    }
+    if (enableCCMD5UpdateHook) {
+        os_log(nake_log, "[nake] Enabling CC_MD5_Update hook");
+        hook_CC_MD5_Update();
+    }
+    
+    // hookNet Hook 调用
+    if (enableSSLCreateContextHook) {
+        os_log(nake_log, "[nake] Enabling SSLCreateContext hook");
+        hook_SSLCreateContext();
+    }
+    if (enableSSLSetConnectionHook) {
+        os_log(nake_log, "[nake] Enabling SSLSetConnection hook");
+        hook_SSLSetConnection();
+    }
+    if (enableSSLWriteHook) {
+        os_log(nake_log, "[nake] Enabling SSLWrite hook");
+        hook_SSLWrite();
+    }
+    if (enableSSLReadHook) {
+        os_log(nake_log, "[nake] Enabling SSLRead hook");
+        hook_SSLRead();
+    }
+    if (enableInetPtonHook) {
+        os_log(nake_log, "[nake] Enabling inet_pton hook");
+        hook_inet_pton();
+    }
+    
+    // hookcommon 扩展 Hook 调用
+    if (enableCFStringAppendHook) {
+        os_log(nake_log, "[nake] Enabling CFStringAppend hook");
+        hook_CFStringAppend();
+    }
+    if (enableCFStringGetLengthHook) {
+        os_log(nake_log, "[nake] Enabling CFStringGetLength hook");
+        hook_CFStringGetLength();
+    }
+    if (enableCFStringGetCStringHook) {
+        os_log(nake_log, "[nake] Enabling CFStringGetCString hook");
+        hook_CFStringGetCString();
+    }
+    if (enableCFArrayGetCountHook) {
+        os_log(nake_log, "[nake] Enabling CFArrayGetCount hook");
+        hook_CFArrayGetCount();
+    }
+    if (enableCFArrayGetValueAtIndexHook) {
+        os_log(nake_log, "[nake] Enabling CFArrayGetValueAtIndex hook");
+        hook_CFArrayGetValueAtIndex();
+    }
+    if (enableCFDataCreateHook) {
+        os_log(nake_log, "[nake] Enabling CFDataCreate hook");
+        hook_CFDataCreate();
+    }
+    if (enableCFDictionaryCreateCopyHook) {
+        os_log(nake_log, "[nake] Enabling CFDictionaryCreateCopy hook");
+        hook_CFDictionaryCreateCopy();
+    }
+    if (enableCFDictionarySetValueHook) {
+        os_log(nake_log, "[nake] Enabling CFDictionarySetValue hook");
+        hook_CFDictionarySetValue();
+    }
+    if (enableCFDictionaryGetValueHook) {
+        os_log(nake_log, "[nake] Enabling CFDictionaryGetValue hook");
+        hook_CFDictionaryGetValue();
+    }
+    if (enableCFUUIDCreateHook) {
+        os_log(nake_log, "[nake] Enabling CFUUIDCreate hook");
+        hook_CFUUIDCreate();
+    }
+    
+    os_log(nake_log, "[nake] Tweak initialization completed for %{public}@", bundleId);
 }

@@ -32,24 +32,20 @@ BOOL customStrcmp(const char *str1, const char *str2) {
 __unused static id (*orig_objc_msgSend)(id, SEL, ...);
 void printSpecificParam_fish(id self, SEL _cmd, void* param1, void* param2)
 {
-    // 只过滤com.netease.urs.init和com.netease.yidun.fingerprint.q线程的
-    // const char *label = dispatch_queue_get_label(DISPATCH_CURRENT_QUEUE_LABEL);
-    // if (!customStrcmp(label, "com.netease.urs.init (QOS: UNSPECIFIED)") && !customStrcmp(label, "com.netease.yidun.fingerprint.q")) {
-    //     return ;
-    // }
-
     const char *cname = object_getClassName(self);
     const char *selector = sel_getName(_cmd);
 
-    if (customStrcmp(selector, "mainScreen")) {
-        return;
-    }
+    const char* queue_label = dispatch_queue_get_label(NULL);
 
     void *callstack[128];
     int frames = backtrace(callstack, 128);
     
     if (frames > 15) {
         frames -= 15;
+    }
+
+    if (strcmp(selector, "characterAtIndex:") == 0 || strcmp(selector, "appendFormat:") == 0) {
+        return;
     }
 
     if (strcmp(selector, "initWithContentsOfFile:") == 0) {
@@ -67,37 +63,37 @@ void printSpecificParam_fish(id self, SEL _cmd, void* param1, void* param2)
     }
 
     if ( strcmp( selector, "isEqualToString:" ) == 0) {
-        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, str: %@", frames, "", cname, selector, self, param1);
+        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, str: %{public}@", frames, "", cname, selector, self, param1);
     } else if ( strcmp( selector, "fileExistsAtPath:" ) == 0) {
-        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, path: %@", frames, "", cname, selector, self, param1);
+        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, path: %{public}@", frames, "", cname, selector, self, param1);
     } else if ( strcmp( selector, "setObject:forKey:" ) == 0) {
-        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, object: %@, key: %@", frames, "", cname, selector, self, param1, param2);
+        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, object: %{public}@, key: %{public}@", frames, "", cname, selector, self, param1, param2);
     } else if ( strcmp( selector, "dataUsingEncoding:" ) == 0 ){
         os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, encoding: %lu", frames, "", cname, selector, self, (NSUInteger)param1);
     } else if ( strcmp( selector, "objectForKey:" ) == 0 ){
-        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, key: %@", frames, "", cname, selector, self, param1);
+        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, key: %{public}@", frames, "", cname, selector, self, param1);
     } else if ( strcmp( selector, "stringByAppendingString:" ) == 0 ){
-        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, str2: %@", frames, "", cname, selector, self, param1);
+        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, str2: %{public}@", frames, "", cname, selector, self, param1);
     } else if ( strcmp( selector, "dataWithJSONObject:options:error:" ) == 0 ){
         os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, json: %@", frames, "", cname, selector, self, param1);
     } else if ( strcmp( selector, "stringWithUTF8String:" ) == 0 ){
-        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, utf8str: %s", frames, "", cname, selector, self, (char*)param1); 
+        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, utf8str: %{public}s", frames, "", cname, selector, self, (char*)param1); 
     } else if ( strcmp( selector, "appendFormat:" ) == 0 ){
-        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, format: %@", frames, "", cname, selector, self, param1);
+        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, format: %{public}@", frames, "", cname, selector, self, param1);
     } else if ( strcmp( selector, "stringWithFormat:" ) == 0 ){
-        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, format: %@", frames, "", cname, selector, self, param1);
+        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, format: %{public}@", frames, "", cname, selector, self, param1);
     } else if ( strcmp( selector, "dictionaryWithObjectsAndKeys:" ) == 0 ){
-        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, objects: %@", frames, "", cname, selector, self, param1);
+        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, objects: %{public}@", frames, "", cname, selector, self, param1);
     } else if ( strcmp( selector, "hasPrefix:" ) == 0 ){
-        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, prefix: %@", frames, "", cname, selector, self, param1);
+        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, prefix: %{public}@", frames, "", cname, selector, self, param1);
     } else if ( strcmp( selector, "hasSuffix:" ) == 0 ){
-        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, suffix: %@", frames, "", cname, selector, self, param1);
+        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, suffix: %{public}@", frames, "", cname, selector, self, param1);
     } else if ( strcmp( selector, "UTF8String" ) == 0 ){
         os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@", frames, "", cname, selector, self);
     } else if ( strcmp( selector, "containsString:" ) == 0) {
-        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, subStr: %@", frames, "", cname, selector, self, param1);
+        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, subStr: %{public}@", frames, "", cname, selector, self, param1);
     } else if ( strcmp( selector, "setText:" ) == 0) {
-        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, text: %@", frames, "", cname, selector, self, param1);
+        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, text: %{public}@", frames, "", cname, selector, self, param1);
     } else if ( strcmp( selector, "objectForKeyedSubscript:" ) == 0 ){
         // 这里打印self使用${public}@时，出现异常，导致app崩溃，崩溃日志显示如下：
         /*
@@ -118,45 +114,47 @@ void printSpecificParam_fish(id self, SEL _cmd, void* param1, void* param2)
     frame #14: 0x00000001176ac55c nake.dylib`hook_Objc_msgSend_fishhook() at hookobjcMsgsend.xm:281:5
         */
         // 因此这里修改为使用%@打印self
-        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %@, key: %@", frames, "", cname, selector, self, param1);
+        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, key: %{public}@", frames, "", cname, selector, self, param1);
     } else if ( strcmp( selector, "attributesOfItemAtPath:error:" ) == 0) {
-        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, path: %@", frames, "", cname, selector, self, param1);
+        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, path: %{public}@", frames, "", cname, selector, self, param1);
     } else if ( strcmp( selector, "initFileURLWithPath:" ) == 0) {
-        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, path: %@", frames, "", cname, selector, self, param1);
+        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, path: %{public}@", frames, "", cname, selector, self, param1);
     } else if ( strcmp( selector, "initWithFileURL:" ) == 0) {
-        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, url: %@", frames, "", cname, selector, self, param1);
+        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, url: %{public}@", frames, "", cname, selector, self, param1);
     } else if ( strcmp( selector, "initWithContentsOfURL:options:error:" ) == 0) {
-        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, url: %@", frames, "", cname, selector, self, param1);
+        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, url: %{public}@", frames, "", cname, selector, self, param1);
     } else if ( strcmp( selector, "valueForKey:" ) == 0) {
-        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, key: %@", frames, "", cname, selector, self, param1);
+        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, key: %{public}@", frames, "", cname, selector, self, param1);
     } else if ( strcmp( selector, "URLWithString:" ) == 0) {
-        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, urlStr: %@", frames, "", cname, selector, self, param1);
+        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, urlStr: %{public}@", frames, "", cname, selector, self, param1);
     } else if ( strcmp( selector, "stringWithContentsOfFile:encoding:error:" ) == 0) {
-        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, path: %@", frames, "", cname, selector, self, param1);
+        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, path: %{public}@", frames, "", cname, selector, self, param1);
     } else if ( strcmp( selector, "stringWithContentsOfURL:encoding:error:" ) == 0) {
-        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, url: %@", frames, "", cname, selector, self, param1);
+        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, url: %{public}@", frames, "", cname, selector, self, param1);
     } else if ( strcmp( selector, "writeToFile:atomically:encoding:error:" ) == 0) {
-        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, path: %@", frames, "", cname, selector, self, param1);
+        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, path: %{public}@", frames, "", cname, selector, self, param1);
+    } else if ( strcmp( selector, "writeToFile:atomically:" ) == 0) {
+        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, path: %{public}@", frames, "", cname, selector, self, param1);
     } else if ( strcmp( selector, "writeToURL:atomically:encoding:error:" ) == 0) {
-        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, url: %@", frames, "", cname, selector, self, param1);
+        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, url: %{public}@", frames, "", cname, selector, self, param1);
     } else if ( strcmp( selector, "JSONString" ) == 0) {
         os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@", frames, "", cname, selector, self);
     } else if ( strcmp( selector, "JSONObjectWithData:options:error:" ) == 0) {
-        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, data: %@", frames, "", cname, selector, self, param1);
+        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, data: %{public}@", frames, "", cname, selector, self, param1);
     } else if ( strcmp( selector, "base64EncodedStringWithOptions:" ) == 0) {
         os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@", frames, "", cname, selector, self); 
     } else if ( strcmp( selector, "base64EncodedDataWithOptions:" ) == 0) {
         os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@", frames, "", cname, selector, self);
     } else if ( strcmp( selector, "initWithBase64EncodedString:options:" ) == 0) {
-        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, base64Str: %@", frames, "", cname, selector, self, param1);
+        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, base64Str: %{public}@", frames, "", cname, selector, self, param1);
     } else if ( strcmp( selector, "initWithBase64EncodedData:options:" ) == 0) {
-        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, data: %@", frames, "", cname, selector, self, param1);
+        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, data: %{public}@", frames, "", cname, selector, self, param1);
     } else if ( strcmp( selector, "MD5String" ) == 0) {
         os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@", frames, "", cname, selector, self);
     } else if ( strcmp( selector, "SHA256String" ) == 0) {
         os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@", frames, "", cname, selector, self);
     } else if ( strcmp( selector, "HMACWithAlgorithm:key:" ) == 0) {
-        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, key: %@", frames, "", cname, selector, self, param2);
+        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, key: %{public}@", frames, "", cname, selector, self, param2);
     } else if ( strcmp( selector, "substringFromIndex:" ) == 0) {
         os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, index: %lu", frames, "", cname, selector, self, (NSUInteger)param1);
     } else if ( strcmp( selector, "substringToIndex:" ) == 0) {
@@ -218,13 +216,13 @@ void printSpecificParam_fish(id self, SEL _cmd, void* param1, void* param2)
     frame #17: 0x0000000112edc55c nake.dylib`hook_Objc_msgSend_fishhook() at hookobjcMsgsend.xm:281:5
         // 因此这里修改为使用%@打印self
         */
-        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %@", frames, "", cname, selector, self);
+        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@", frames, "", cname, selector, self);
     } else if ( strcmp( selector, "allKeys" ) == 0) {
         os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@", frames, "", cname, selector, self); 
     } else if ( strcmp( selector, "allValues" ) == 0) {
         os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@", frames, "", cname, selector, self); 
     } else if ( strcmp( selector, "removeObjectForKey:" ) == 0) {
-        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, key: %@", frames, "", cname, selector, self, param1);
+        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, key: %{public}@", frames, "", cname, selector, self, param1);
     } else if ( strcmp( selector, "removeAllObjects" ) == 0) {
         os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@", frames, "", cname, selector, self);
     } else if ( strcmp( selector, "length" ) == 0) {
@@ -232,7 +230,7 @@ void printSpecificParam_fish(id self, SEL _cmd, void* param1, void* param2)
     } else if ( strcmp( selector, "characterAtIndex:" ) == 0) {
         os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, index: %lu", frames, "", cname, selector, self, (NSUInteger)param1);
     } else if ( strcmp( selector, "init" ) == 0) {
-        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@", frames, "", cname, selector, self); 
+        os_log(hook_log, "%*s[HOOK] class: %s, method: %s", frames, "", cname, selector); 
     } else if ( strcmp( selector, "alloc" ) == 0) {
         os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@", frames, "", cname, selector, self); 
     } else if ( strcmp( selector, "new" ) == 0) {
@@ -260,8 +258,15 @@ void printSpecificParam_fish(id self, SEL _cmd, void* param1, void* param2)
     } else if ( strcmp( selector, "performSelector:withObject:" ) == 0) {
         os_log(hook_log, "%*s[HOOK] class: %s, method: %s, self: %{public}@, selector: %s, object: %@", frames, "", cname, selector, self, sel_getName((SEL)param1), param2);
     } else if (strcmp (selector, "dictionaryWithContentsOfFile:") == 0) {
-        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, file: %@", frames, "", cname, selector, param1);
-    } else {
+        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, file: %{public}@", frames, "", cname, selector, param1);
+    } else if (strcmp (selector, "attributesOfFileSystemForPath:") == 0) {
+        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, path: %{public}@", frames, "", cname, selector, param1);
+    } else if (strcmp (selector, "attributesOfFileSystemForPath:error:") == 0) {
+        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, path: %{public}@", frames, "", cname, selector, param1);
+    } else if (strcmp (selector, "dataWithContentsOfFile:") == 0) {
+        os_log(hook_log, "%*s[HOOK] class: %s, method: %s, path: %{public}@", frames, "", cname, selector, param1);
+    } 
+    else {
         os_log(hook_log, "%*s[HOOK] class: %s, method: %s", frames, "", cname, selector);
     }
 }
@@ -333,11 +338,30 @@ static void hook_Objc_msgSend_fishhook() {
     call(br, orig_objc_msgSend)
 }
 
+static int (*orig_mincore)(void *addr, size_t len, unsigned char *flags);
+int hook_mincore(void *addr, size_t len, unsigned char *flags) {
+    os_log(hook_log, "[HOOK] mincore: %p, %zu, %p", addr, len, flags);
+    return orig_mincore(addr, len, flags);
+}
+
+
+// hook kern_return_t vm_region_recurse_64(vm_map_read_t target_task, vm_address_t *address, vm_size_t *size, natural_t *nesting_depth, vm_region_recurse_info_t info, mach_msg_type_number_t *infoCnt);
+static kern_return_t (*orig_vm_region_recurse_64)(vm_map_read_t target_task, vm_address_t *address, vm_size_t *size, natural_t *nesting_depth, vm_region_recurse_info_t info, mach_msg_type_number_t *infoCnt);
+kern_return_t hook_vm_region_recurse_64(vm_map_read_t target_task, vm_address_t *address, vm_size_t *size, natural_t *nesting_depth, vm_region_recurse_info_t info, mach_msg_type_number_t *infoCnt) {
+    os_log(hook_log, "[HOOK] vm_region_recurse_64: %u, %p, %p, %p, %p, %p", target_task, address, size, nesting_depth, info, infoCnt);
+    return orig_vm_region_recurse_64(target_task, address, size, nesting_depth, info, infoCnt);
+}
+
 
 void doHookObjcMsgsend(void) {
     // fishhook
+    //  hook mincore
     struct rebinding rebindings[1] = {
         {"objc_msgSend", (void *)hook_Objc_msgSend_fishhook, (void **)&orig_objc_msgSend},
+        //{"mincore", (void *)hook_mincore, (void **)&orig_mincore},
+        //{"vm_region_recurse_64", (void *)hook_vm_region_recurse_64, (void **)&orig_vm_region_recurse_64},
     };
+
+    
     rebind_symbols(rebindings, 1);
 }

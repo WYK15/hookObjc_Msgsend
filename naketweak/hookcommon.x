@@ -1,7 +1,8 @@
 #import "hookcommon.h"
 #import <dlfcn.h>
 #import <Foundation/Foundation.h>
-#include <substrate.h>
+#import <CoreFoundation/CoreFoundation.h>
+#import <substrate.h>
 #import "fishhook/fishhook.h"
 #import <CFNetwork/CFNetwork.h>
 #include <stdio.h>
@@ -26,6 +27,9 @@
 #include <sys/ioctl.h>
 #import <SystemConfiguration/CaptiveNetwork.h>
 #import <SystemConfiguration/SystemConfiguration.h>
+#import <os/log.h>
+
+static os_log_t hook_log = OS_LOG_DEFAULT;
 
 // 原始函数指针
 static int (*orig_access)(const char *path, int mode);
@@ -97,7 +101,7 @@ static int new_access(const char *path, int mode) {
 // hook的dlopen实现
 static void *new_dlopen(const char *path, int mode) {
     if (path) {
-        NSLog(@"[HOOK] dlopen called with path: %s, mode: %d", path, mode);
+        os_log(hook_log, "[HOOK] dlopen called with path: %{public}s, mode: %d", path, mode);
     }
     return orig_dlopen(path, mode);
 }
@@ -105,7 +109,7 @@ static void *new_dlopen(const char *path, int mode) {
 // hook的dlsym实现
 static void *new_dlsym(void *handle, const char *symbol) {
     if (symbol) {
-        NSLog(@"[HOOK] dlsym called with symbol: %s", symbol);
+        os_log(hook_log, "[HOOK] dlsym called with symbol: %{public}s", symbol);
     }
     return orig_dlsym(handle, symbol);
 }
@@ -127,7 +131,7 @@ void hook_dlsym(void) {
 
 // hook的_res_9_init实现
 static void new_res_9_init(void) {
-    NSLog(@"[HOOK] _res_9_init called");
+    os_log(hook_log, "[HOOK] _res_9_init called");
     return orig_res_9_init();
 }
 
@@ -141,7 +145,7 @@ void hook_res_9_init(void) {
 
 // hook的class_getClassMethod实现
 static Method new_class_getClassMethod(Class cls, SEL name) {
-    NSLog(@"[HOOK] class_getClassMethod called for class: %s, selector: %s", 
+    os_log(hook_log, "[HOOK] class_getClassMethod called for class: %{public}s, selector: %{public}s", 
           class_getName(cls), sel_getName(name));
     return orig_class_getClassMethod(cls, name);
 }
@@ -153,7 +157,7 @@ void hook_class_getClassMethod(void) {
 
 // hook的sel_registerName实现
 static SEL new_sel_registerName(const char *name) {
-    NSLog(@"[HOOK] sel_registerName called with name: %s", name);
+    os_log(hook_log, "[HOOK] sel_registerName called with name: %{public}s", name);
     return orig_sel_registerName(name);
 }
 
@@ -164,12 +168,12 @@ void hook_sel_registerName(void) {
 
 // hook的CFNetworkCopySystemProxySettings实现
 static CFDictionaryRef new_CFNetworkCopySystemProxySettings(void) {
-    NSLog(@"[HOOK] CFNetworkCopySystemProxySettings called");
-    CFDictionaryRef result = orig_CFNetworkCopySystemProxySettings();
-    if (result) {
-        NSLog(@"[HOOK] CFNetworkCopySystemProxySettings returned proxy settings");
+    os_log(hook_log, "[HOOK] CFNetworkCopySystemProxySettings called");
+    CFDictionaryRef proxySettings = orig_CFNetworkCopySystemProxySettings();
+    if (proxySettings) {
+        os_log(hook_log, "[HOOK] CFNetworkCopySystemProxySettings returned proxy settings");
     }
-    return result;
+    return proxySettings;
 }
 
 // 初始化CFNetworkCopySystemProxySettings hook
@@ -179,7 +183,7 @@ void hook_CFNetworkCopySystemProxySettings(void) {
 
 // hook的CNCopyCurrentNetworkInfo实现
 static CFDictionaryRef new_CNCopyCurrentNetworkInfo(CFStringRef interfaceName) {
-    NSLog(@"[HOOK] CNCopyCurrentNetworkInfo called with interface: %@", interfaceName);
+    os_log(hook_log, "[HOOK] CNCopyCurrentNetworkInfo called with interface: %{public}@", interfaceName);
     return orig_CNCopyCurrentNetworkInfo(interfaceName);
 }
 
@@ -190,7 +194,7 @@ void hook_CNCopyCurrentNetworkInfo(void) {
 
 // hook的CNCopySupportedInterfaces实现
 static CFArrayRef new_CNCopySupportedInterfaces(void) {
-    NSLog(@"[HOOK] CNCopySupportedInterfaces called");
+    os_log(hook_log, "[HOOK] CNCopySupportedInterfaces called");
     return orig_CNCopySupportedInterfaces();
 }
 
@@ -203,7 +207,7 @@ void hook_CNCopySupportedInterfaces(void) {
 
 // hook的fopen实现
 static FILE *new_fopen(const char *path, const char *mode) {
-    NSLog(@"[HOOK] fopen called with path: %s, mode: %s", path, mode);
+    os_log(hook_log, "[HOOK] fopen called with path: %{public}s, mode: %{public}s", path, mode);
     return orig_fopen(path, mode);
 }
 
@@ -213,7 +217,7 @@ void hook_fopen(void) {
 
 // hook的getenv实现
 static char *new_getenv(const char *name) {
-    NSLog(@"[HOOK] getenv called with name: %s", name);
+    os_log(hook_log, "[HOOK] getenv called with name: %{public}s", name);
     return orig_getenv(name);
 }
 
@@ -223,7 +227,7 @@ void hook_getenv(void) {
 
 // hook的getifaddrs实现
 static int new_getifaddrs(struct ifaddrs **ifap) {
-    NSLog(@"[HOOK] getifaddrs called");
+    os_log(hook_log, "[HOOK] getifaddrs called");
     return orig_getifaddrs(ifap);
 }
 
@@ -233,7 +237,7 @@ void hook_getifaddrs(void) {
 
 // hook的gettimeofday实现
 static int new_gettimeofday(struct timeval *tv, struct timezone *tz) {
-    NSLog(@"[HOOK] gettimeofday called");
+    os_log(hook_log, "[HOOK] gettimeofday called");
     return orig_gettimeofday(tv, tz);
 }
 
@@ -243,7 +247,7 @@ void hook_gettimeofday(void) {
 
 // hook的getpagesize实现
 static long new_getpagesize(void) {
-    NSLog(@"[HOOK] getpagesize called");
+    os_log(hook_log, "[HOOK] getpagesize called");
     return orig_getpagesize();
 }
 
@@ -253,7 +257,7 @@ void hook_getpagesize(void) {
 
 // hook的stat实现
 static int new_stat(const char *path, struct stat *buf) {
-    NSLog(@"[HOOK] stat called with path: %s", path);
+    os_log(hook_log, "[HOOK] stat called with path: %{public}s", path);
     return orig_stat(path, buf);
 }
 
@@ -263,7 +267,7 @@ void hook_stat(void) {
 
 // hook的statfs实现
 static int new_statfs(const char *path, struct statfs *buf) {
-    NSLog(@"[HOOK] statfs called with path: %s", path);
+    os_log(hook_log, "[HOOK] statfs called with path: %{public}s", path);
     return orig_statfs(path, buf);
 }
 
@@ -273,7 +277,7 @@ void hook_statfs(void) {
 
 // hook的__dyld_image_count实现
 static uint32_t new___dyld_image_count(void) {
-    NSLog(@"[HOOK] __dyld_image_count called");
+    os_log(hook_log, "[HOOK] __dyld_image_count called");
     return orig___dyld_image_count();
 }
 
@@ -283,7 +287,7 @@ void hook___dyld_image_count(void) {
 
 // hook的__dyld_get_image_vmaddr_slide实现
 static intptr_t new___dyld_get_image_vmaddr_slide(uint32_t image_index) {
-    NSLog(@"[HOOK] __dyld_get_image_vmaddr_slide called with image_index: %u", image_index);
+    os_log(hook_log, "[HOOK] __dyld_get_image_vmaddr_slide called with image_index: %u", image_index);
     return orig___dyld_get_image_vmaddr_slide(image_index);
 }
 
@@ -304,9 +308,11 @@ void hook___dyld_get_image_name(void) {
 
 // hook的sysctl实现
 static int new_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp, size_t newlen) {
-    NSLog(@"[HOOK] sysctl called with namelen: %u", namelen);
-    for (u_int i = 0; i < namelen; i++) {
-        NSLog(@"[HOOK] sysctl name[%u] = %d", i, name[i]);
+    os_log(hook_log, "[HOOK] sysctl called with namelen: %u", namelen);
+    if (name) {
+        for (u_int i = 0; i < namelen && i < 10; i++) {
+            os_log(hook_log, "[HOOK] sysctl name[%u] = %d", i, name[i]);
+        }
     }
     return orig_sysctl(name, namelen, oldp, oldlenp, newp, newlen);
 }
@@ -317,7 +323,7 @@ void hook_sysctl(void) {
 
 // hook的sysctlbyname实现
 static int new_sysctlbyname(const char *name, void *oldp, size_t *oldlenp, void *newp, size_t newlen) {
-    NSLog(@"[HOOK] sysctlbyname called with name: %s", name);
+    os_log(hook_log, "[HOOK] sysctlbyname called with name: %{public}s", name);
     return orig_sysctlbyname(name, oldp, oldlenp, newp, newlen);
 }
 
@@ -327,7 +333,7 @@ void hook_sysctlbyname(void) {
 
 // hook的uname实现
 static int new_uname(struct utsname *name) {
-    NSLog(@"[HOOK] uname called");
+    os_log(hook_log, "[HOOK] uname called");
     return orig_uname(name);
 }
 
@@ -337,7 +343,7 @@ void hook_uname(void) {
 
 // hook的isatty实现
 static int new_isatty(int fd) {
-    NSLog(@"[HOOK] isatty called with fd: %d", fd);
+    os_log(hook_log, "[HOOK] isatty called with fd: %d", fd);
     return orig_isatty(fd);
 }
 
@@ -347,7 +353,7 @@ void hook_isatty(void) {
 
 // hook的opendir实现
 static DIR *new_opendir(const char *filename) {
-    NSLog(@"[HOOK] opendir called with filename: %s", filename);
+    os_log(hook_log, "[HOOK] opendir called with filename: %{public}s", filename);
     return orig_opendir(filename);
 }
 
@@ -358,9 +364,9 @@ void hook_opendir(void) {
 // hook的read实现
 static ssize_t new_read(int fd, void *buf, size_t count) {
     char path[PATH_MAX] = {0};
-    NSLog(@"[HOOK] read called with fd: %d, count: %zu", fd, count);
+    os_log(hook_log, "[HOOK] read called with fd: %d, count: %zu", fd, count);
     if (fcntl(fd, F_GETPATH, path) == 0) {
-        NSLog(@"[hook_read] %s fd=%d count=%zu", path, fd, count);
+        os_log(hook_log, "[hook_read] %{public}s fd=%d count=%zu", path, fd, count);
     }
     return orig_read(fd, buf, count);
 }
@@ -372,8 +378,8 @@ void hook_read(void) {
 // ============ 加密函数的 hook 实现 ============
 
 // hook的CC_SHA256实现
-static unsigned char *new_CC_SHA256(const void *data, CC_LONG len, unsigned char *md) {
-    NSLog(@"[HOOK] CC_SHA256 called with len: %u", len);
+static void *new_CC_SHA256(const void *data, size_t len, unsigned char *md) {
+    os_log(hook_log, "[HOOK] CC_SHA256 called with len: %u", (unsigned int)len);
     return orig_CC_SHA256(data, len, md);
 }
 
@@ -382,9 +388,9 @@ void hook_CC_SHA256(void) {
 }
 
 // hook的CC_SHA1_Update实现
-static int new_CC_SHA1_Update(CC_SHA1_CTX *context, const void *data, CC_LONG len) {
-    NSLog(@"[HOOK] CC_SHA1_Update called with len: %u", len);
-    return orig_CC_SHA1_Update(context, data, len);
+static int new_CC_SHA1_Update(CC_SHA1_CTX *c, const void *data, CC_LONG len) {
+    os_log(hook_log, "[HOOK] CC_SHA1_Update called with len: %u", (unsigned int)len);
+    return orig_CC_SHA1_Update(c, data, len);
 }
 
 void hook_CC_SHA1_Update(void) {
@@ -395,7 +401,7 @@ void hook_CC_SHA1_Update(void) {
 
 // hook的host_info实现
 static kern_return_t new_host_info(host_t host, host_flavor_t flavor, host_info_t host_info_out, mach_msg_type_number_t *host_info_outCnt) {
-    NSLog(@"[HOOK] host_info called with flavor: %u", flavor);
+    os_log(hook_log, "[HOOK] host_info called with flavor: %u", flavor);
     return orig_host_info(host, flavor, host_info_out, host_info_outCnt);
 }
 
@@ -404,9 +410,9 @@ void hook_host_info(void) {
 }
 
 // hook的host_statistics64实现
-static kern_return_t new_host_statistics64(host_t host_priv, host_flavor_t flavor, host_info64_t host_info64, mach_msg_type_number_t *host_info64Cnt) {
-    NSLog(@"[HOOK] host_statistics64 called with flavor: %u", flavor);
-    return orig_host_statistics64(host_priv, flavor, host_info64, host_info64Cnt);
+static kern_return_t new_host_statistics64(host_t host_priv, host_flavor_t flavor, host_info64_t info, mach_msg_type_number_t *count) {
+    os_log(hook_log, "[HOOK] host_statistics64 called with flavor: %u", flavor);
+    return orig_host_statistics64(host_priv, flavor, info, count);
 }
 
 void hook_host_statistics64(void) {
@@ -415,7 +421,7 @@ void hook_host_statistics64(void) {
 
 // hook的host_statistics实现
 static kern_return_t new_host_statistics(host_t host_priv, host_flavor_t flavor, host_info_t host_info_out, mach_msg_type_number_t *host_info_outCnt) {
-    NSLog(@"[HOOK] host_statistics called with flavor: %u", flavor);
+    os_log(hook_log, "[HOOK] host_statistics called with flavor: %u", flavor);
     return orig_host_statistics(host_priv, flavor, host_info_out, host_info_outCnt);
 }
 
@@ -428,7 +434,7 @@ void hook_host_statistics(void) {
 
 // hook的CFStringCreateCopy实现
 static CFStringRef new_CFStringCreateCopy(CFAllocatorRef alloc, CFStringRef theString) {
-    NSLog(@"[HOOK] CFStringCreateCopy called");
+    os_log(hook_log, "[HOOK] CFStringCreateCopy called");
     return orig_CFStringCreateCopy(alloc, theString);
 }
 
@@ -438,7 +444,7 @@ void hook_CFStringCreateCopy(void) {
 
 // hook的CFStringCreateWithCString实现
 static CFStringRef new_CFStringCreateWithCString(CFAllocatorRef alloc, const char *cStr, CFStringEncoding encoding) {
-    NSLog(@"[HOOK] CFStringCreateWithCString called with cStr: %s", cStr);
+    os_log(hook_log, "[HOOK] CFStringCreateWithCString called with cStr: %{public}s", cStr);
     return orig_CFStringCreateWithCString(alloc, cStr, encoding);
 }
 
@@ -448,7 +454,7 @@ void hook_CFStringCreateWithCString(void) {
 
 // hook的CFStringCreateWithFileSystemRepresentation实现
 static CFStringRef new_CFStringCreateWithFileSystemRepresentation(CFAllocatorRef alloc, const char *buffer) {
-    NSLog(@"[HOOK] CFStringCreateWithFileSystemRepresentation called with buffer: %s", buffer);
+    os_log(hook_log, "[HOOK] CFStringCreateWithFileSystemRepresentation called with buffer: %{public}s", buffer);
     return orig_CFStringCreateWithFileSystemRepresentation(alloc, buffer);
 }
 
@@ -458,7 +464,7 @@ void hook_CFStringCreateWithFileSystemRepresentation(void) {
 
 // hook的CFStringCreateWithFormat实现
 static CFStringRef new_CFStringCreateWithFormat(CFAllocatorRef alloc, CFDictionaryRef formatOptions, CFStringRef format, ...) {
-    NSLog(@"[HOOK] CFStringCreateWithFormat called");
+    os_log(hook_log, "[HOOK] CFStringCreateWithFormat called");
     va_list args;
     va_start(args, format);
     CFStringRef result = CFStringCreateWithFormatAndArguments(alloc, formatOptions, format, args);
@@ -470,11 +476,121 @@ void hook_CFStringCreateWithFormat(void) {
     MSHookFunction((void *)CFStringCreateWithFormat, (void *)new_CFStringCreateWithFormat, (void **)&orig_CFStringCreateWithFormat);
 }
 
+// ============ CoreFoundation String 函数的 hook 实现 ============
+
+// hook的CFStringAppend实现
+static void (*orig_CFStringAppend)(CFMutableStringRef theString, CFStringRef appendString);
+static void new_CFStringAppend(CFMutableStringRef theString, CFStringRef appendString) {
+    os_log(hook_log, "[HOOK] CFStringAppend called");
+    return orig_CFStringAppend(theString, appendString);
+}
+void hook_CFStringAppend(void) {
+    MSHookFunction((void *)CFStringAppend, (void *)new_CFStringAppend, (void **)&orig_CFStringAppend);
+}
+
+// hook的CFStringGetLength实现
+static CFIndex (*orig_CFStringGetLength)(CFStringRef theString);
+static CFIndex new_CFStringGetLength(CFStringRef theString) {
+    os_log(hook_log, "[HOOK] CFStringGetLength called");
+    return orig_CFStringGetLength(theString);
+}
+void hook_CFStringGetLength(void) {
+    MSHookFunction((void *)CFStringGetLength, (void *)new_CFStringGetLength, (void **)&orig_CFStringGetLength);
+}
+
+// hook的CFStringGetCString实现
+static Boolean (*orig_CFStringGetCString)(CFStringRef theString, char *buffer, CFIndex bufferSize, CFStringEncoding encoding);
+static Boolean new_CFStringGetCString(CFStringRef theString, char *buffer, CFIndex bufferSize, CFStringEncoding encoding) {
+    os_log(hook_log, "[HOOK] CFStringGetCString called, bufferSize: %ld", (long)bufferSize);
+    return orig_CFStringGetCString(theString, buffer, bufferSize, encoding);
+}
+void hook_CFStringGetCString(void) {
+    MSHookFunction((void *)CFStringGetCString, (void *)new_CFStringGetCString, (void **)&orig_CFStringGetCString);
+}
+
+// ============ CoreFoundation Array 函数的 hook 实现 ============
+
+// hook的CFArrayGetCount实现
+static CFIndex (*orig_CFArrayGetCount)(CFArrayRef array);
+static CFIndex new_CFArrayGetCount(CFArrayRef array) {
+    os_log(hook_log, "[HOOK] CFArrayGetCount called");
+    return orig_CFArrayGetCount(array);
+}
+void hook_CFArrayGetCount(void) {
+    MSHookFunction((void *)CFArrayGetCount, (void *)new_CFArrayGetCount, (void **)&orig_CFArrayGetCount);
+}
+
+// hook的CFArrayGetValueAtIndex实现
+static const void *(*orig_CFArrayGetValueAtIndex)(CFArrayRef array, CFIndex idx);
+static const void *new_CFArrayGetValueAtIndex(CFArrayRef array, CFIndex idx) {
+    os_log(hook_log, "[HOOK] CFArrayGetValueAtIndex called, idx: %ld", (long)idx);
+    return orig_CFArrayGetValueAtIndex(array, idx);
+}
+void hook_CFArrayGetValueAtIndex(void) {
+    MSHookFunction((void *)CFArrayGetValueAtIndex, (void *)new_CFArrayGetValueAtIndex, (void **)&orig_CFArrayGetValueAtIndex);
+}
+
+// ============ CoreFoundation Data 函数的 hook 实现 ============
+
+// hook的CFDataCreate实现
+static CFDataRef (*orig_CFDataCreate)(CFAllocatorRef allocator, const UInt8 *bytes, CFIndex length);
+static CFDataRef new_CFDataCreate(CFAllocatorRef allocator, const UInt8 *bytes, CFIndex length) {
+    os_log(hook_log, "[HOOK] CFDataCreate called, length: %ld", (long)length);
+    return orig_CFDataCreate(allocator, bytes, length);
+}
+void hook_CFDataCreate(void) {
+    MSHookFunction((void *)CFDataCreate, (void *)new_CFDataCreate, (void **)&orig_CFDataCreate);
+}
+
+// ============ CoreFoundation Dictionary 函数的 hook 实现 ============
+
+// hook的CFDictionaryCreateCopy实现
+static CFDictionaryRef (*orig_CFDictionaryCreateCopy)(CFAllocatorRef allocator, CFDictionaryRef dict);
+static CFDictionaryRef new_CFDictionaryCreateCopy(CFAllocatorRef allocator, CFDictionaryRef theDict) {
+    os_log(hook_log, "[HOOK] CFDictionaryCreateCopy called");
+    return orig_CFDictionaryCreateCopy(allocator, theDict);
+}
+void hook_CFDictionaryCreateCopy(void) {
+    MSHookFunction((void *)CFDictionaryCreateCopy, (void *)new_CFDictionaryCreateCopy, (void **)&orig_CFDictionaryCreateCopy);
+}
+
+// hook的CFDictionarySetValue实现
+static void (*orig_CFDictionarySetValue)(CFMutableDictionaryRef dict, const void *key, const void *value);
+static void new_CFDictionarySetValue(CFMutableDictionaryRef dict, const void *key, const void *value) {
+    os_log(hook_log, "[HOOK] CFDictionarySetValue called");
+    orig_CFDictionarySetValue(dict, key, value);
+}
+void hook_CFDictionarySetValue(void) {
+    MSHookFunction((void *)CFDictionarySetValue, (void *)new_CFDictionarySetValue, (void **)&orig_CFDictionarySetValue);
+}
+
+// hook的CFDictionaryGetValue实现
+static const void *(*orig_CFDictionaryGetValue)(CFDictionaryRef dict, const void *key);
+static const void *new_CFDictionaryGetValue(CFDictionaryRef dict, const void *key) {
+    os_log(hook_log, "[HOOK] CFDictionaryGetValue called");
+    return orig_CFDictionaryGetValue(dict, key);
+}
+void hook_CFDictionaryGetValue(void) {
+    MSHookFunction((void *)CFDictionaryGetValue, (void *)new_CFDictionaryGetValue, (void **)&orig_CFDictionaryGetValue);
+}
+
+// ============ CoreFoundation UUID 函数的 hook 实现 ============
+
+// hook的CFUUIDCreate实现
+static CFUUIDRef (*orig_CFUUIDCreate)(CFAllocatorRef allocator);
+static CFUUIDRef new_CFUUIDCreate(CFAllocatorRef allocator) {
+    os_log(hook_log, "[HOOK] CFUUIDCreate called");
+    return orig_CFUUIDCreate(allocator);
+}
+void hook_CFUUIDCreate(void) {
+    MSHookFunction((void *)CFUUIDCreate, (void *)new_CFUUIDCreate, (void **)&orig_CFUUIDCreate);
+}
+
 // ============ CoreFoundation URL 函数的 hook 实现 ============
 
 // hook的CFURLCreateWithFileSystemPath实现
 static CFURLRef new_CFURLCreateWithFileSystemPath(CFAllocatorRef allocator, CFStringRef filePath, CFURLPathStyle pathStyle, Boolean isDirectory) {
-    NSLog(@"[HOOK] CFURLCreateWithFileSystemPath called");
+    os_log(hook_log, "[HOOK] CFURLCreateWithFileSystemPath called");
     return orig_CFURLCreateWithFileSystemPath(allocator, filePath, pathStyle, isDirectory);
 }
 
@@ -484,7 +600,7 @@ void hook_CFURLCreateWithFileSystemPath(void) {
 
 // hook的CFURLCreateWithString实现
 static CFURLRef new_CFURLCreateWithString(CFAllocatorRef allocator, CFStringRef URLString, CFURLRef baseURL) {
-    NSLog(@"[HOOK] CFURLCreateWithString called");
+    os_log(hook_log, "[HOOK] CFURLCreateWithString called");
     return orig_CFURLCreateWithString(allocator, URLString, baseURL);
 }
 
@@ -496,7 +612,7 @@ void hook_CFURLCreateWithString(void) {
 
 // hook的CACurrentMediaTime实现
 static CFTimeInterval new_CACurrentMediaTime(void) {
-    NSLog(@"[HOOK] CACurrentMediaTime called");
+    os_log(hook_log, "[HOOK] CACurrentMediaTime called");
     return orig_CACurrentMediaTime();
 }
 
@@ -508,7 +624,8 @@ void hook_CACurrentMediaTime(void) {
 
 // hook的SecItemAdd实现
 static OSStatus new_SecItemAdd(CFDictionaryRef attributes, CFTypeRef *result) {
-    NSLog(@"[HOOK] SecItemAdd called");
+    // 打印attributes参数
+    os_log(hook_log, "[HOOK] SecItemAdd called with attributes: %{public}@", attributes);
     return orig_SecItemAdd(attributes, result);
 }
 
@@ -518,7 +635,12 @@ void hook_SecItemAdd(void) {
 
 // hook的SecItemUpdate实现
 static OSStatus new_SecItemUpdate(CFDictionaryRef query, CFDictionaryRef attributesToUpdate) {
-    NSLog(@"[HOOK] SecItemUpdate called");
+    // 打印query参数
+    os_log(hook_log, "[HOOK] SecItemUpdate called with query: %{public}@", query);
+    // 打印attributesToUpdate参数
+    os_log(hook_log, "[HOOK] SecItemUpdate called with attributesToUpdate: %{public}@", attributesToUpdate);
+    // 打印attributesToUpdate参数
+    // os_log(hook_log, "[HOOK] SecItemUpdate called with attributesToUpdate: %{public}@", attributesToUpdate);
     return orig_SecItemUpdate(query, attributesToUpdate);
 }
 
@@ -528,7 +650,8 @@ void hook_SecItemUpdate(void) {
 
 // hook的SecItemDelete实现
 static OSStatus new_SecItemDelete(CFDictionaryRef query) {
-    NSLog(@"[HOOK] SecItemDelete called");
+    // 打印query参数
+    os_log(hook_log, "[HOOK] SecItemDelete called with query: %{public}@", query);
     return orig_SecItemDelete(query);
 }
 
@@ -538,7 +661,8 @@ void hook_SecItemDelete(void) {
 
 // hook的SecItemCopyMatching实现
 static OSStatus new_SecItemCopyMatching(CFDictionaryRef query, CFTypeRef *result) {
-    NSLog(@"[HOOK] SecItemCopyMatching called");
+    // 打印query参数
+    os_log(hook_log, "[HOOK] SecItemCopyMatching called with query: %{public}@", query);
     return orig_SecItemCopyMatching(query, result);
 }
 
@@ -552,8 +676,8 @@ void hook_SecItemCopyMatching(void) {
 static int (*orig_dladdr)(const void *addr, Dl_info *info);
 
 // hook的dladdr实现
-static int new_dladdr(const void *addr, Dl_info *info) {
-    NSLog(@"[HOOK] dladdr called with addr: %p", addr);
+static int new_dladdr(void *addr, Dl_info *info) {
+    os_log(hook_log, "[HOOK] dladdr called with addr: %p", addr);
     return orig_dladdr(addr, info);
 }
 
@@ -566,7 +690,7 @@ static int (*orig_faccessat)(int dirfd, const char *pathname, int mode, int flag
 
 // hook的faccessat实现
 static int new_faccessat(int dirfd, const char *pathname, int mode, int flags) {
-    NSLog(@"[HOOK] faccessat called with dirfd: %d, pathname: %s, mode: %d, flags: %d", dirfd, pathname, mode, flags);
+    os_log(hook_log, "[HOOK] faccessat called with dirfd: %d, pathname: %{public}s, mode: %d, flags: %d", dirfd, pathname, mode, flags);
     return orig_faccessat(dirfd, pathname, mode, flags);
 }
 
@@ -579,7 +703,7 @@ static pid_t (*orig_getpid)(void);
 
 // hook的getpid实现
 static pid_t new_getpid(void) {
-    NSLog(@"[HOOK] getpid called");
+    os_log(hook_log, "[HOOK] getpid called");
     return orig_getpid();
 }
 
@@ -592,7 +716,7 @@ static pid_t (*orig_getppid)(void);
 
 // hook的getppid实现
 static pid_t new_getppid(void) {
-    NSLog(@"[HOOK] getppid called");
+    os_log(hook_log, "[HOOK] getppid called");
     return orig_getppid();
 }
 
@@ -606,7 +730,7 @@ static getsectiondata_func_t orig_getsectiondata;
 
 // hook的getsectiondata实现
 static const char *new_getsectiondata(const struct mach_header *mh, const char *segname, const char *section, unsigned long *size) {
-    NSLog(@"[HOOK] getsectiondata called with segname: %s, section: %s", segname, section);
+    os_log(hook_log, "[HOOK] getsectiondata called with segname: %{public}s, section: %{public}s", segname, section);
     return orig_getsectiondata(mh, segname, section, size);
 }
 
@@ -622,7 +746,7 @@ static int (*orig_ioctl)(int fd, unsigned long request, ...);
 
 // hook的ioctl实现
 static int new_ioctl(int fd, unsigned long request, ...) {
-    NSLog(@"[HOOK] ioctl called with fd: %d, request: %lu", fd, request);
+    os_log(hook_log, "[HOOK] ioctl called with fd: %d, request: %lu", fd, request);
     return orig_ioctl(fd, request);
 }
 
@@ -634,7 +758,7 @@ void hook_ioctl(void) {
 static int (*orig_vsnprintf)(char *str, size_t size, const char *format, va_list ap);
 
 static int new_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
-    NSLog(@"[HOOK] vsnprintf called size=%zu format=%s", size, format);
+    os_log(hook_log, "[HOOK] vsnprintf called size=%zu format=%s", size, format);
     return orig_vsnprintf(str, size, format, ap);
 }
 
@@ -666,7 +790,7 @@ static int (*orig_rand)(void);
 
 // hook的rand实现
 static int new_rand(void) {
-    NSLog(@"[HOOK] rand called");
+    os_log(hook_log, "[HOOK] rand called");
     return orig_rand();
 }
 
@@ -679,7 +803,7 @@ static struct dirent *(*orig_readdir)(DIR *dirp);
 
 // hook的readdir实现
 static struct dirent *new_readdir(DIR *dirp) {
-    NSLog(@"[HOOK] readdir called");
+    os_log(hook_log, "[HOOK] readdir called");
     return orig_readdir(dirp);
 }
 
@@ -692,7 +816,7 @@ static int (*orig_rmdir)(const char *path);
 
 // hook的rmdir实现
 static int new_rmdir(const char *path) {
-    NSLog(@"[HOOK] rmdir called with path: %s", path);
+    os_log(hook_log, "[HOOK] rmdir called with path: %{public}s", path);
     return orig_rmdir(path);
 }
 
@@ -705,7 +829,7 @@ static int (*orig_mkdir)(const char *path, mode_t mode);
 
 // hook的mkdir实现
 static int new_mkdir(const char *path, mode_t mode) {
-    NSLog(@"[HOOK] mkdir called with path: %s, mode: %d", path, mode);
+    os_log(hook_log, "[HOOK] mkdir called with path: %{public}s, mode: %d", path, mode);
     return orig_mkdir(path, mode);
 }
 
@@ -718,7 +842,7 @@ static int (*orig_socket)(int domain, int type, int protocol);
 
 // hook的socket实现
 static int new_socket(int domain, int type, int protocol) {
-    NSLog(@"[HOOK] socket called with domain: %d, type: %d, protocol: %d", domain, type, protocol);
+    os_log(hook_log, "[HOOK] socket called with domain: %d, type: %d, protocol: %d", domain, type, protocol);
     return orig_socket(domain, type, protocol);
 }
 
@@ -731,7 +855,7 @@ static void (*orig_srand)(unsigned int seed);
 
 // hook的srand实现
 static void new_srand(unsigned int seed) {
-    NSLog(@"[HOOK] srand called with seed: %u", seed);
+    os_log(hook_log, "[HOOK] srand called with seed: %u", seed);
     return orig_srand(seed);
 }
 
@@ -744,7 +868,7 @@ static int (*orig_strcmp)(const char *s1, const char *s2);
 
 // hook的strcmp实现
 static int new_strcmp(const char *s1, const char *s2) {
-    NSLog(@"[HOOK] strcmp called with s1: %s, s2: %s", s1, s2);
+    os_log(hook_log, "[HOOK] strcmp called with s1: %{public}s, s2: %{public}s", s1, s2);
     return orig_strcmp(s1, s2);
 }
 
@@ -757,7 +881,7 @@ static char *(*orig_strnstr)(const char *haystack, const char *needle, size_t le
 
 // hook的strnstr实现
 static char *new_strnstr(const char *haystack, const char *needle, size_t len) {
-    NSLog(@"[HOOK] strnstr called with haystack: %s, needle: %s, len: %zu", haystack, needle, len);
+    os_log(hook_log, "[HOOK] strnstr called with haystack: %{public}s, needle: %{public}s, len: %zu", haystack, needle, len);
     return orig_strnstr(haystack, needle, len);
 }
 
@@ -770,7 +894,7 @@ static long (*orig_sysconf)(int name);
 
 // hook的sysconf实现
 static long new_sysconf(int name) {
-    NSLog(@"[HOOK] sysconf called with name: %d", name);
+    os_log(hook_log, "[HOOK] sysconf called with name: %d", name);
     return orig_sysconf(name);
 }
 
@@ -783,7 +907,7 @@ static time_t (*orig_time)(time_t *tloc);
 
 // hook的time实现
 static time_t new_time(time_t *tloc) {
-    NSLog(@"[HOOK] time called");
+    os_log(hook_log, "[HOOK] time called");
     return orig_time(tloc);
 }
 
@@ -796,7 +920,7 @@ static char *(*orig_strcasestr)(const char *haystack, const char *needle);
 
 // hook的strcasestr实现
 static char *new_strcasestr(const char *haystack, const char *needle) {
-    NSLog(@"[HOOK] strcasestr called with haystack: %s, needle: %s", haystack, needle);
+    os_log(hook_log, "[HOOK] strcasestr called with haystack: %{public}s, needle: %{public}s", haystack, needle);
     return orig_strcasestr(haystack, needle);
 }
 
@@ -810,7 +934,7 @@ static snprintf_func_t orig_snprintf_func;
 
 // hook的snprintf实现（用于替换sprintf）
 static int new_sprintf_wrapper(char *str, const char *format, ...) {
-    NSLog(@"[HOOK] sprintf called with format: %s", format);
+    os_log(hook_log, "[HOOK] sprintf called with format: %{public}s", format);
     va_list args;
     va_start(args, format);
     int result = vsnprintf(str, 1024, format, args);
@@ -833,7 +957,7 @@ static int (*orig_fstat)(int fd, struct stat *buf);
 
 // hook的fstat实现
 static int new_fstat(int fd, struct stat *buf) {
-    NSLog(@"[HOOK] fstat called with fd: %d", fd);
+    os_log(hook_log, "[HOOK] fstat called with fd: %d", fd);
     return orig_fstat(fd, buf);
 }
 
@@ -846,7 +970,7 @@ static int (*orig_fstatat)(int dirfd, const char *pathname, struct stat *buf, in
 
 // hook的fstatat实现
 static int new_fstatat(int dirfd, const char *pathname, struct stat *buf, int flags) {
-    NSLog(@"[HOOK] fstatat called with dirfd: %d, pathname: %s, flags: %d", dirfd, pathname, flags);
+    os_log(hook_log, "[HOOK] fstatat called with dirfd: %d, pathname: %{public}s, flags: %d", dirfd, pathname, flags);
     return orig_fstatat(dirfd, pathname, buf, flags);
 }
 
@@ -859,7 +983,7 @@ static int (*orig_lstat)(const char *pathname, struct stat *buf);
 
 // hook的lstat实现
 static int new_lstat(const char *pathname, struct stat *buf) {
-    NSLog(@"[HOOK] lstat called with pathname: %s", pathname);
+    os_log(hook_log, "[HOOK] lstat called with pathname: %{public}s", pathname);
     return orig_lstat(pathname, buf);
 }
 
@@ -872,7 +996,7 @@ static size_t (*orig_fread)(void *ptr, size_t size, size_t nmemb, FILE *stream);
 
 // hook的fread实现
 static size_t new_fread(void *ptr, size_t size, size_t nmemb, FILE *stream) {
-    NSLog(@"[HOOK] fread called with size: %zu, nmemb: %zu", size, nmemb);
+    os_log(hook_log, "[HOOK] fread called with size: %zu, nmemb: %zu", size, nmemb);
     return orig_fread(ptr, size, nmemb, stream);
 }
 
@@ -898,7 +1022,7 @@ static FILE *(*orig_popen)(const char *command, const char *type);
 
 // hook的popen实现
 static FILE *new_popen(const char *command, const char *type) {
-    NSLog(@"[HOOK] popen called with command: %s, type: %s", command, type);
+    os_log(hook_log, "[HOOK] popen called with command: %{public}s, type: %{public}s", command, type);
     return orig_popen(command, type);
 }
 

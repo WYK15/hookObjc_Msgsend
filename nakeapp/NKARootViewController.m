@@ -88,6 +88,29 @@ static NSString *const kEnableCCCryptorCreateWithModeHook = @"enableCCCryptorCre
 static NSString *const kEnableCCCryptorCreateHook = @"enableCCCryptorCreate";
 static NSString *const kEnableCCCryptorUpdateHook = @"enableCCCryptorUpdate";
 static NSString *const kEnableCCCryptorFinalHook = @"enableCCCryptorFinal";
+static NSString *const kEnableCCHmacHook = @"enableCCHmac";
+static NSString *const kEnableCCHmacUpdateHook = @"enableCCHmacUpdate";
+static NSString *const kEnableCCMD5Hook = @"enableCCMD5";
+static NSString *const kEnableCCMD5UpdateHook = @"enableCCMD5Update";
+
+// hookNet 控制键
+static NSString *const kEnableSSLCreateContextHook = @"enableSSLCreateContext";
+static NSString *const kEnableSSLSetConnectionHook = @"enableSSLSetConnection";
+static NSString *const kEnableSSLWriteHook = @"enableSSLWrite";
+static NSString *const kEnableSSLReadHook = @"enableSSLRead";
+static NSString *const kEnableInetPtonHook = @"enableInetPton";
+
+// hookcommon 扩展控制键
+static NSString *const kEnableCFStringAppendHook = @"enableCFStringAppend";
+static NSString *const kEnableCFStringGetLengthHook = @"enableCFStringGetLength";
+static NSString *const kEnableCFStringGetCStringHook = @"enableCFStringGetCString";
+static NSString *const kEnableCFArrayGetCountHook = @"enableCFArrayGetCount";
+static NSString *const kEnableCFArrayGetValueAtIndexHook = @"enableCFArrayGetValueAtIndex";
+static NSString *const kEnableCFDataCreateHook = @"enableCFDataCreate";
+static NSString *const kEnableCFDictionaryCreateCopyHook = @"enableCFDictionaryCreateCopy";
+static NSString *const kEnableCFDictionarySetValueHook = @"enableCFDictionarySetValue";
+static NSString *const kEnableCFDictionaryGetValueHook = @"enableCFDictionaryGetValue";
+static NSString *const kEnableCFUUIDCreateHook = @"enableCFUUIDCreate";
 
 // stdstringhook 控制键
 static NSString *const kEnableStdstringAppendLenHook = @"enableStdstringAppendLen";
@@ -128,7 +151,7 @@ static NSString *const kEnableStdstringAssignHook = @"enableStdstringAssign";
 - (NSInteger)tableView:(UITableView *)tableView
     numberOfRowsInSection:(NSInteger)section {
   if (section == 0) {
-    return 66; // 7个原有 Hook 开关 + 14个系统函数独立开关 + 7个其他类别 Hook 开关 + 8个新Hook开关 + 5个新增Hook开关 + 24个新增Hook开关 + 1个lstat开关
+    return 85; // 7个原有 Hook 开关 + 14个系统函数独立开关 + 7个其他类别 Hook 开关 + 8个新Hook开关 + 5个新增Hook开关 + 24个新增Hook开关 + 1个lstat开关 + 19个新Hook开关
   } else {
     return 2; // 全局开关 + 查看应用列表按钮
   }
@@ -500,6 +523,101 @@ static NSString *const kEnableStdstringAssignHook = @"enableStdstringAssign";
       title = @"启用 popen Hook";
       key = kEnablePopenHook;
       tag = 164;
+      break;
+    case 66:
+      title = @"启用 CCHmac Hook";
+      key = kEnableCCHmacHook;
+      tag = 170;
+      break;
+    case 67:
+      title = @"启用 CCHmacUpdate Hook";
+      key = kEnableCCHmacUpdateHook;
+      tag = 171;
+      break;
+    case 68:
+      title = @"启用 CC_MD5 Hook";
+      key = kEnableCCMD5Hook;
+      tag = 172;
+      break;
+    case 69:
+      title = @"启用 CC_MD5_Update Hook";
+      key = kEnableCCMD5UpdateHook;
+      tag = 173;
+      break;
+    case 70:
+      title = @"启用 SSLCreateContext Hook";
+      key = kEnableSSLCreateContextHook;
+      tag = 174;
+      break;
+    case 71:
+      title = @"启用 SSLSetConnection Hook";
+      key = kEnableSSLSetConnectionHook;
+      tag = 175;
+      break;
+    case 72:
+      title = @"启用 SSLWrite Hook";
+      key = kEnableSSLWriteHook;
+      tag = 176;
+      break;
+    case 73:
+      title = @"启用 SSLRead Hook";
+      key = kEnableSSLReadHook;
+      tag = 177;
+      break;
+    case 74:
+      title = @"启用 inet_pton Hook";
+      key = kEnableInetPtonHook;
+      tag = 178;
+      break;
+    case 75:
+      title = @"启用 CFStringAppend Hook";
+      key = kEnableCFStringAppendHook;
+      tag = 180;
+      break;
+    case 76:
+      title = @"启用 CFStringGetLength Hook";
+      key = kEnableCFStringGetLengthHook;
+      tag = 181;
+      break;
+    case 77:
+      title = @"启用 CFStringGetCString Hook";
+      key = kEnableCFStringGetCStringHook;
+      tag = 182;
+      break;
+    case 78:
+      title = @"启用 CFArrayGetCount Hook";
+      key = kEnableCFArrayGetCountHook;
+      tag = 183;
+      break;
+    case 79:
+      title = @"启用 CFArrayGetValueAtIndex Hook";
+      key = kEnableCFArrayGetValueAtIndexHook;
+      tag = 184;
+      break;
+    case 80:
+      title = @"启用 CFDataCreate Hook";
+      key = kEnableCFDataCreateHook;
+      tag = 185;
+      break;
+    case 81:
+      title = @"启用 CFDictionaryCreateCopy Hook";
+      key = kEnableCFDictionaryCreateCopyHook;
+      tag = 186;
+      break;
+    case 82:
+      title = @"启用 CFDictionarySetValue Hook";
+      key = kEnableCFDictionarySetValueHook;
+      tag = 187;
+      break;
+    case 83:
+      title = @"启用 CFDictionaryGetValue Hook";
+      key = kEnableCFDictionaryGetValueHook;
+      tag = 188;
+      break;
+    case 84:
+      title = @"启用 CFUUIDCreate Hook";
+      key = kEnableCFUUIDCreateHook;
+      tag = 189;
       break;
     default:
       title = @"";
@@ -1010,6 +1128,63 @@ static NSString *const kEnableStdstringAssignHook = @"enableStdstringAssign";
       break;
     case 165:
       key = kEnableLstatHook;
+      break;
+    case 170:
+      key = kEnableCCHmacHook;
+      break;
+    case 171:
+      key = kEnableCCHmacUpdateHook;
+      break;
+    case 172:
+      key = kEnableCCMD5Hook;
+      break;
+    case 173:
+      key = kEnableCCMD5UpdateHook;
+      break;
+    case 174:
+      key = kEnableSSLCreateContextHook;
+      break;
+    case 175:
+      key = kEnableSSLSetConnectionHook;
+      break;
+    case 176:
+      key = kEnableSSLWriteHook;
+      break;
+    case 177:
+      key = kEnableSSLReadHook;
+      break;
+    case 178:
+      key = kEnableInetPtonHook;
+      break;
+    case 180:
+      key = kEnableCFStringAppendHook;
+      break;
+    case 181:
+      key = kEnableCFStringGetLengthHook;
+      break;
+    case 182:
+      key = kEnableCFStringGetCStringHook;
+      break;
+    case 183:
+      key = kEnableCFArrayGetCountHook;
+      break;
+    case 184:
+      key = kEnableCFArrayGetValueAtIndexHook;
+      break;
+    case 185:
+      key = kEnableCFDataCreateHook;
+      break;
+    case 186:
+      key = kEnableCFDictionaryCreateCopyHook;
+      break;
+    case 187:
+      key = kEnableCFDictionarySetValueHook;
+      break;
+    case 188:
+      key = kEnableCFDictionaryGetValueHook;
+      break;
+    case 189:
+      key = kEnableCFUUIDCreateHook;
       break;
   default:
     return;

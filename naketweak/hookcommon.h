@@ -71,6 +71,28 @@ void hook_CFStringCreateCopy(void);
 void hook_CFStringCreateWithCString(void);
 void hook_CFStringCreateWithFileSystemRepresentation(void);
 void hook_CFStringCreateWithFormat(void);
+void hook_CFStringAppend(void);
+
+// CoreFoundation Array 函数
+void hook_CFArrayGetCount(void);
+void hook_CFArrayGetValueAtIndex(void);
+
+// CoreFoundation Data 函数
+void hook_CFDataCreate(void);
+
+// CoreFoundation Dictionary 函数
+void hook_CFDictionaryCreateCopy(void);
+void hook_CFDictionarySetValue(void);
+void hook_CFDictionaryGetValue(void);
+
+// CoreFoundation UUID 函数
+void hook_CFUUIDCreate(void);
+
+// CoreFoundation String Length 函数
+void hook_CFStringGetLength(void);
+
+// CoreFoundation String Get CString 函数
+void hook_CFStringGetCString(void);
 
 // CoreFoundation URL 函数
 void hook_CFURLCreateWithFileSystemPath(void);
